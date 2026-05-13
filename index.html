@@ -168,9 +168,27 @@ body {
   .sheet-area {
     padding: 8px 12px 12px;
     flex: none;
-    height: calc(100svh - 50px - 68px - 34px - 64px - 16px);
+    height: calc(100svh - 50px - 68px - 60px - 64px - 16px);
     min-height: 300px;
   }
+
+  /* ── mobile table: single horizontal scroll, no split panels ── */
+  .sheet-card { overflow: hidden; }
+  .tbl-wrap { display: block; overflow: auto; -webkit-overflow-scrolling: touch; height: 100%; }
+  .tbl-head { display: block; position: sticky; top: 0; z-index: 10; white-space: nowrap; background: var(--bg); border-bottom: 1.5px solid var(--border); }
+  .tbl-head-frozen,
+  .tbl-head-scroll { display: inline-block; vertical-align: top; overflow: visible; }
+  .tbl-head-scroll-inner { display: inline-flex; white-space: nowrap; }
+  .tbl-head-row2 { display: block; white-space: nowrap; background: var(--bg); }
+  .tbl-head-row2-frozen,
+  .tbl-head-row2-scroll { display: inline-block; vertical-align: top; overflow: visible; }
+  .tbl-head-row2-inner { display: inline-flex; white-space: nowrap; }
+  .tbl-body { display: block; overflow: visible; white-space: nowrap; }
+  .tbl-frozen { display: inline-block; vertical-align: top; overflow: visible; border-right: none; width: auto !important; }
+  .tbl-scroll { display: inline-block; vertical-align: top; overflow: visible; flex: none; }
+  .tbl-scroll-inner { display: block; }
+  .row { white-space: nowrap; display: inline-flex; min-width: 0; }
+  .fc, .sc { flex-shrink: 0; }
 
   /* panels: full-width, anchored top */
   .mgr-panel,
@@ -1733,6 +1751,7 @@ function render() {
 }
 
 function syncScroll(el) {
+  if (window.innerWidth <= 768) return; // mobile uses tbl-wrap scroll, no sync needed
   document.getElementById('frozenBody').scrollTop = el.scrollTop;
   document.getElementById('scrollHead').scrollLeft  = el.scrollLeft;
   document.getElementById('scrollHead2').scrollLeft = el.scrollLeft;
