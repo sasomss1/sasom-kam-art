@@ -1645,12 +1645,19 @@ function openMgrPanel(key, e) {
   title.textContent = 'Manage — ' + (colMeta?.label || key);
   renderMgrList();
   panel.classList.add('open');
-  // Position near click
-  if (e) {
-    const rect = e.target.getBoundingClientRect();
-    panel.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
-    panel.style.top  = Math.min(rect.bottom + 4, window.innerHeight - 340) + 'px';
+
+  // Always anchor below the "Manage lists" button in topbar
+  const anchor = document.getElementById('mgrDropBtn');
+  if (anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const pw = 260;
+    let left = rect.right - pw; // right-align with button
+    if (left < 8) left = 8;
+    panel.style.left = left + 'px';
+    panel.style.top  = (rect.bottom + 6) + 'px';
+    panel.style.right = 'auto';
   }
+
   setTimeout(() => document.getElementById('mgrInput').focus(), 80);
 }
 
@@ -1682,15 +1689,16 @@ function addMgrItem() {
   }
   inp.value = '';
   renderMgrList();
-  render(); // refresh dropdowns
+  render(); // refresh dropdowns in cells
+  inp.focus(); // stay focused for next entry
   toast('Added: ' + val, 'ok');
 }
 
 function deleteMgrItem(idx) {
   const arr = dynOpts[mgrKey];
   if (arr) { arr.splice(idx, 1); saveDyn(mgrKey); }
-  renderMgrList();
-  render();
+  renderMgrList(); // re-render list only, keep panel open
+  render();        // refresh cell dropdowns
 }
 
 // Unified outside-click handler
@@ -1698,12 +1706,11 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.hc-drop') && !e.target.closest('.hc-filter-btn')) {
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
   }
-  if (!e.target.closest('#mgrPanel') && !e.target.closest('.hc-filter-btn[onclick*="openMgrPanel"]') && !e.target.closest('[onclick*="openMgrPanel"]')) {
-    document.getElementById('mgrPanel')?.classList.remove('open');
-  }
+  // mgrPanel closes only via X button or Escape — not outside click
   if (!e.target.closest('#frzPanel') && !e.target.closest('#frzToggleBtn')) {
     document.getElementById('frzPanel')?.classList.remove('open');
   }
+  // mgrPanel — only close via X or Escape, NOT outside click
 });
 
 /* ── freeze settings ── */
@@ -1764,7 +1771,7 @@ function toggleMgrMenu(e) {
   menu.innerHTML = dynCols.map(c =>
     `<div style="padding:6px 14px;font-size:12px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s"
       onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"
-      onclick="openMgrPanel('${c.dynKey}',event);document.getElementById('mgrMenu').style.display='none'">
+      onclick="openMgrPanel('${c.dynKey}',null);document.getElementById('mgrMenu').style.display='none'">
       <span style="color:var(--ink4);font-size:10px">${(dynOpts[c.dynKey]||[]).length}</span>
       ${c.label}
     </div>`
@@ -1800,6 +1807,15 @@ function toast(msg, type) {
 }
 
 load(); render();
+
+// Escape closes mgr panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeMgrPanel();
+    document.getElementById('frzPanel')?.classList.remove('open');
+    document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
+  }
+});
 // Auto-pull on page load (after short delay to let UI paint first)
 setTimeout(autoPull, 500);
 </script>
