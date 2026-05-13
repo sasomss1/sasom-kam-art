@@ -961,10 +961,10 @@ function getFrozen() {
 const ONBOARD_MONTH = { k:'month', label:'เดือน Onboard', w:110, type:'sel', opts:MONTHS };
 
 const MONTHLY_SECS = [
-  { key:'gmv',     label:'GMV (฿)',      cls:'sec',      mw:88 },
-  { key:'orders',  label:'Orders',       cls:'sec-ord',  mw:70 },
-  { key:'listing', label:'New listing',  cls:'sec-lst',  mw:70 },
-  { key:'failed',  label:'Failed orders',cls:'sec-fail', mw:70 },
+  { key:'gmv',     label:'GMV (฿)',      cls:'sec',      mw:110 },
+  { key:'orders',  label:'Orders',       cls:'sec-ord',  mw:85 },
+  { key:'listing', label:'New listing',  cls:'sec-lst',  mw:85 },
+  { key:'failed',  label:'Failed orders',cls:'sec-fail', mw:85 },
 ];
 
 /* ── sort state ── */
@@ -1161,9 +1161,7 @@ function sellerTypeChip(v) {
 /* ── fmt ── */
 function fmt(n) {
   if(!n||n===0) return '—';
-  if(n>=1e6) return (n/1e6).toFixed(2)+'M';
-  if(n>=1e3) return (n/1e3).toFixed(0)+'K';
-  return n.toLocaleString();
+  return (+n).toLocaleString('th-TH');
 }
 function gmvTot(r){ return Object.values(r.gmv||{}).reduce((a,b)=>a+(+b||0),0); }
 
@@ -1335,7 +1333,7 @@ function render() {
   /* scroll header */
   let sh = infoCols.map(c => makeHC(c, c.w)).join('');
   MONTHLY_SECS.forEach(s=>{
-    sh += `<div class="hc ${s.cls}" style="width:110px;min-width:110px">${s.label} — Total</div>`;
+    sh += `<div class="hc ${s.cls}" style="width:130px;min-width:130px;flex-direction:column;align-items:flex-start;gap:1px;height:auto;padding:5px 8px"><span>${s.label}</span><span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span></div>`;
     MONTHS.forEach(m=>{
       sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px">${m}</div>`;
     });
@@ -1425,7 +1423,7 @@ function render() {
     MONTHLY_SECS.forEach(s=>{
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
-      srow += `<div class="sc tot-cell" style="width:110px;min-width:110px">
+      srow += `<div class="sc tot-cell" style="width:130px;min-width:130px">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling ? '…' : (tot?fmt(tot):'—')}</span></div>`;
       MONTHS.forEach(m=>{
         const v=(r[s.key]||{})[m]||0;
