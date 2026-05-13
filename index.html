@@ -313,6 +313,19 @@ body {
 }
 .sc:last-child { border-right: none; }
 .sc.tot-cell { background: var(--bg); border-right: 2px solid var(--border2) !important; }
+.hc.q-hdr { font-weight: 700; letter-spacing: .8px; }
+.tbl-head-row2 { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--g0); }
+.tbl-head-row2-frozen { flex-shrink: 0; }
+.tbl-head-row2-scroll { flex: 1; overflow: hidden; }
+.tbl-head-row2-inner  { display: flex; min-width: max-content; }
+.hc-top { /* Q label row */ }
+.hc-sub { height: 24px; font-size: 9px; }
+.hc-q-span {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+  border-right: 2px solid rgba(0,0,0,.1);
+  flex-shrink: 0;
+}
 
 /* cell content */
 .c-num { font-size: 11px; color: var(--ink4); text-align: right; width: 100%; }
@@ -817,6 +830,12 @@ select.c-in {
             <div class="tbl-head-scroll-inner" id="scrollHeadInner"></div>
           </div>
         </div>
+        <div class="tbl-head-row2" id="tblHead2" style="display:none">
+          <div class="tbl-head-row2-frozen" id="frozenHead2"></div>
+          <div class="tbl-head-row2-scroll" id="scrollHead2" style="flex:1;overflow:hidden">
+            <div class="tbl-head-row2-inner" id="scrollHeadInner2"></div>
+          </div>
+        </div>
         <!-- body -->
         <div class="tbl-body">
           <div class="tbl-frozen" id="frozenBody"></div>
@@ -961,11 +980,29 @@ function getFrozen() {
 const ONBOARD_MONTH = { k:'month', label:'เดือน Onboard', w:110, type:'sel', opts:MONTHS };
 
 const MONTHLY_SECS = [
-  { key:'gmv',     label:'GMV (฿)',      cls:'sec',      mw:110 },
-  { key:'orders',  label:'Orders',       cls:'sec-ord',  mw:85 },
-  { key:'listing', label:'New listing',  cls:'sec-lst',  mw:85 },
-  { key:'failed',  label:'Failed orders',cls:'sec-fail', mw:85 },
+  { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110 },
+  { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85 },
+  { key:'listing', label:'New listing',   cls:'sec-lst',  mw:85 },
+  { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85 },
 ];
+
+// Q grouping: Q1=Jan-Mar, Q2=Apr-Jun, Q3=Jul-Sep, Q4=Oct-Dec
+const QUARTERS = {
+  Q1: ['Jan','Feb','Mar'],
+  Q2: ['Apr','May','Jun'],
+  Q3: ['Jul','Aug','Sep'],
+  Q4: ['Oct','Nov','Dec'],
+};
+
+function calcQ(r, metric) {
+  const d = r[metric] || {};
+  return {
+    Q1: (d.Jan||0)+(d.Feb||0)+(d.Mar||0),
+    Q2: (d.Apr||0)+(d.May||0)+(d.Jun||0),
+    Q3: (d.Jul||0)+(d.Aug||0)+(d.Sep||0),
+    Q4: (d.Oct||0)+(d.Nov||0)+(d.Dec||0),
+  };
+}
 
 /* ── sort state ── */
 let sortKey = null;  // column key being sorted
@@ -1333,12 +1370,19 @@ function render() {
   /* scroll header */
   let sh = infoCols.map(c => makeHC(c, c.w)).join('');
   MONTHLY_SECS.forEach(s=>{
+    // TOTAL col
     sh += `<div class="hc ${s.cls}" style="width:130px;min-width:130px;flex-direction:column;align-items:flex-start;gap:1px;height:auto;padding:5px 8px"><span>${s.label}</span><span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span></div>`;
-    MONTHS.forEach(m=>{
-      sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px">${m}</div>`;
+    // Q1-Q4: Q total then 3 months
+    Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
+      sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12)">${qLabel}</div>`;
+      qMonths.forEach(m => {
+        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px">${m}</div>`;
+      });
     });
   });
+
   document.getElementById('scrollHeadInner').innerHTML = sh;
+  document.getElementById('tblHead2').style.display = 'none';
 
   if(!filtered.length) {
     document.getElementById('frozenBody').innerHTML = `<div class="empty-msg">No sellers${q?' matching search':''}</div>`;
@@ -1423,13 +1467,23 @@ function render() {
     MONTHLY_SECS.forEach(s=>{
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
+      const qTotals = calcQ(r, s.key);
+
+      // Total all
       srow += `<div class="sc tot-cell" style="width:130px;min-width:130px">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling ? '…' : (tot?fmt(tot):'—')}</span></div>`;
-      MONTHS.forEach(m=>{
-        const v=(r[s.key]||{})[m]||0;
-        srow += `<div class="sc" style="width:${s.mw}px;min-width:${s.mw}px">`;
-        srow += `<span class="m-num ${v?'':'z'}">${isPulling ? '…' : (v?fmt(v):'—')}</span>`;
-        srow += `</div>`;
+
+      // Q1-Q4: Q total then 3 months
+      Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
+        const qVal = qTotals[qLabel] || 0;
+        srow += `<div class="sc tot-cell" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.08)">
+          <span class="c-val mono ${qVal?'':'dim'}">${isPulling ? '…' : (qVal?fmt(qVal):'—')}</span></div>`;
+        qMonths.forEach(m=>{
+          const v=(r[s.key]||{})[m]||0;
+          srow += `<div class="sc" style="width:${s.mw}px;min-width:${s.mw}px">`;
+          srow += `<span class="m-num ${v?'':'z'}">${isPulling ? '…' : (v?fmt(v):'—')}</span>`;
+          srow += `</div>`;
+        });
       });
     });
     srow += `</div>`;
@@ -1449,7 +1503,8 @@ function render() {
 
 function syncScroll(el) {
   document.getElementById('frozenBody').scrollTop = el.scrollTop;
-  document.getElementById('scrollHead').scrollLeft = el.scrollLeft;
+  document.getElementById('scrollHead').scrollLeft  = el.scrollLeft;
+  document.getElementById('scrollHead2').scrollLeft = el.scrollLeft;
 }
 
 function updateStats() {
