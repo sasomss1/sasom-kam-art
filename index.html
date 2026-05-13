@@ -87,64 +87,102 @@ body {
   /* main takes full width */
   .main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* topbar wraps */
+  /* topbar — single row: hamburger | title | right-actions */
   .topbar {
-    height: auto;
-    min-height: 50px;
-    flex-wrap: wrap;
-    padding: 8px 12px;
+    height: 50px;
+    flex-wrap: nowrap;
+    padding: 0 12px;
     gap: 8px;
+    overflow: visible;
   }
-  .topbar > div:first-child { flex: 1; min-width: 0; }
-  .topbar-title { font-size: 14px; }
+  /* the title div sits right after hamburger, takes remaining space */
+  .topbar > div:first-of-type { flex: 1; min-width: 0; }
+  .topbar-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-meta  { display: none; }
+
+  /* right-side: only show View/Edit badge and + Add seller on mobile */
   .topbar-r {
-    width: 100%;
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
     gap: 6px;
     margin-left: 0;
+    flex-shrink: 0;
   }
-  .topbar-r .btn, .topbar-r .tb-badge {
-    font-size: 11px;
-    padding: 5px 10px;
-  }
-  #addBtn { margin-left: auto; }
+  /* hide Manage lists, Freeze, Export buttons on mobile — they're in the sidebar */
+  .topbar-r #mgrDropBtn,
+  .topbar-r #mgrDropBtn + div,
+  .topbar-r #frzToggleBtn,
+  .topbar-r #exportBtn { display: none; }
+  .topbar-r .tb-badge { font-size: 11px; padding: 5px 10px; }
+  #addBtn { font-size: 11px; padding: 5px 10px; }
 
-  /* filterbar wraps */
+  /* filterbar — tabs on top, search below */
   .filterbar {
     height: auto;
-    min-height: 40px;
     flex-wrap: wrap;
-    padding: 6px 12px;
-    gap: 6px;
+    padding: 0 12px;
+    gap: 0;
   }
-  .tab-strip { width: 100%; overflow-x: auto; }
-  .filter-r { width: 100%; flex-wrap: wrap; gap: 6px; }
-  .search-wrap input { width: 130px; }
+  .tab-strip { width: 100%; overflow-x: auto; border-bottom: 1px solid var(--border); }
+  .ftab { font-size: 12px; padding: 0 12px; }
+  .filter-r {
+    width: 100%;
+    padding: 6px 0;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .search-wrap { flex: 1; }
+  .search-wrap input { width: 100%; }
+  /* hide row count on mobile */
+  .row-cnt { display: none; }
+  /* Sync button stays */
+  .filter-r .btn-green { flex-shrink: 0; }
 
-  /* urlbar wraps */
+  /* urlbar — stack the two inputs */
   .urlbar {
     height: auto;
     flex-wrap: wrap;
     padding: 6px 12px;
-    gap: 6px;
+    gap: 4px;
+    row-gap: 4px;
   }
-  .urlbar-in { max-width: 100%; min-width: 140px; }
+  .urlbar-lbl { font-size: 9px; }
+  .urlbar-in { flex: 1; min-width: 0; max-width: 100%; font-size: 10px; }
+  /* hide Raw Sheet label + input on mobile to save space */
+  .urlbar .urlbar-lbl:nth-of-type(2),
+  #rawUrl { display: none; }
+  /* keep เปิด Sheet button visible */
+  #openSheetBtn { flex-shrink: 0; }
+  #rawStatus { font-size: 9px; }
 
   /* stats scroll */
   .stats-row {
-    padding: 10px 12px 0;
+    padding: 8px 12px 0;
     overflow-x: auto;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
+    gap: 8px;
   }
-  .stat-card { min-width: 80px; flex-shrink: 0; }
+  .stat-card { min-width: 76px; padding: 8px 10px; flex-shrink: 0; }
+  .stat-n { font-size: 18px; }
+  .stat-l { font-size: 9px; }
 
-  /* sheet area */
-  .sheet-area { padding: 8px 12px 12px; flex: none; min-height: 400px; height: calc(100vh - 280px); }
+  /* sheet area fills remaining viewport */
+  .sheet-area {
+    padding: 8px 12px 12px;
+    flex: none;
+    height: calc(100svh - 50px - 68px - 34px - 64px - 16px);
+    min-height: 300px;
+  }
 
-  /* panels positioning */
-  .mgr-panel { width: calc(100vw - 24px) !important; left: 12px !important; right: 12px !important; }
-  .frz-panel { width: calc(100vw - 24px) !important; left: 12px !important; right: auto !important; }
+  /* panels: full-width, anchored top */
+  .mgr-panel,
+  .frz-panel {
+    width: calc(100vw - 24px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: 60px !important;
+  }
 
   /* toast */
   .toast { right: 12px; bottom: 16px; left: 12px; text-align: center; }
@@ -846,9 +884,23 @@ select.c-in {
     Export CSV
   </button>
 
+  <div class="sb-section" style="margin-top:8px">Settings</div>
+  <button class="sb-item" onclick="toggleMgrMenu(event);closeSidebar()">
+    <span class="sb-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    </span>
+    Manage lists
+  </button>
+  <button class="sb-item" onclick="openFrzPanel({target:document.getElementById('frzToggleBtn'),stopPropagation:()=>{}});closeSidebar()">
+    <span class="sb-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
+    </span>
+    Freeze columns
+  </button>
+
   <div style="flex:1"></div>
   <div style="padding:12px 14px 14px;border-top:1px solid #2a2520">
-    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit"
+    <a id="sheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit"
       target="_blank"
       style="display:flex;align-items:center;gap:8px;font-size:11px;color:#555;text-decoration:none;padding:6px 4px;transition:color .15s"
       onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
@@ -887,7 +939,7 @@ select.c-in {
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
         Freeze
       </button>
-      <button class="btn btn-ghost" onclick="exportCSV()">Export</button>
+      <button class="btn btn-ghost" id="exportBtn" onclick="exportCSV()">Export</button>
       <button class="btn btn-dark" onclick="requireEdit(addRow)" id="addBtn">+ Add seller</button>
     </div>
   </div>
@@ -916,7 +968,13 @@ select.c-in {
     <span class="urlbar-lbl">Apps Script</span>
     <input class="urlbar-in" type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveUrl()">
     <span class="urlbar-lbl" style="margin-left:12px">Raw Sheet</span>
-    <input class="urlbar-in" type="text" id="rawUrl" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="saveUrl()">
+    <input class="urlbar-in" type="text" id="rawUrl" placeholder="https://docs.google.com/spreadsheets/d/..." oninput="saveUrl(); updateSheetLink()">
+    <a id="openSheetBtn" href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit" target="_blank"
+      style="display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:6px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:11px;font-weight:500;text-decoration:none;flex-shrink:0;white-space:nowrap;transition:background .15s"
+      onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      เปิด Sheet
+    </a>
     <button class="btn btn-ghost" style="height:24px;padding:0 10px;font-size:10px" onclick="pullPerfData()">↻ Refresh</button>
     <span style="font-size:10px;color:var(--ink4)" id="rawStatus"></span>
   </div>
@@ -927,7 +985,7 @@ select.c-in {
     <div class="stat-card"><div class="stat-n" id="st-vvip">0</div><div class="stat-l">VVIP</div></div>
     <div class="stat-card"><div class="stat-n" id="st-act">0</div><div class="stat-l">Active</div></div>
     <div class="stat-card"><div class="stat-n" id="st-gmv">—</div><div class="stat-l">Total GMV</div></div>
-    <div class="stat-card" style="margin-left:auto"><div class="stat-n" id="st-sync" style="font-size:12px;color:var(--ink3)">—</div><div class="stat-l">Last sync</div></div>
+    <div class="stat-card" style="margin-left:auto"><div class="stat-n" id="st-sync" style="font-size:11px;color:var(--ink3)">—</div><div class="stat-l">Cloud sync</div></div>
   </div>
 
   <!-- SPREADSHEET -->
@@ -1192,16 +1250,7 @@ document.getElementById('lockScreen').addEventListener('click', e => {
   if (e.target.id === 'lockScreen') e.target.classList.remove('show');
 });
 
-/* ── persist ── */
-function load() {
-  vData = JSON.parse(localStorage.getItem('vp26') || '[]');
-  oData = JSON.parse(localStorage.getItem('vo26') || '[]');
-  document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
-  document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
-  const savedPins = localStorage.getItem('pinnedCols26');
-  if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
-  loadDynOpts();
-}
+/* ── persist (local) ── */
 function persist() {
   localStorage.setItem('vp26', JSON.stringify(vData));
   localStorage.setItem('vo26', JSON.stringify(oData));
@@ -1211,6 +1260,80 @@ function saveUrl() {
   localStorage.setItem('srawurl26', document.getElementById('rawUrl').value.trim());
 }
 
+/* ── load: local first, then hydrate from Sheet ── */
+function load() {
+  vData = JSON.parse(localStorage.getItem('vp26') || '[]');
+  oData = JSON.parse(localStorage.getItem('vo26') || '[]');
+  document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
+  document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
+  const savedPins = localStorage.getItem('pinnedCols26');
+  if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
+  loadDynOpts();
+}
+
+/* ── cloud sync status badge ── */
+function setSyncStatus(state, msg) {
+  // state: 'idle' | 'loading' | 'saving' | 'ok' | 'err'
+  const el = document.getElementById('st-sync');
+  const colors = { idle:'var(--ink3)', loading:'var(--amber)', saving:'var(--amber)', ok:'var(--green)', err:'var(--rose)' };
+  const icons  = { idle:'—', loading:'⟳ กำลังโหลด…', saving:'⟳ กำลัง sync…', ok:'✓ ' + msg, err:'✗ ' + msg };
+  el.textContent = icons[state] || msg;
+  el.style.color = colors[state] || '';
+}
+
+/* ── load data FROM Google Sheet (called on page open) ── */
+async function loadFromSheet() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) return; // no URL yet — use localStorage only
+  setSyncStatus('loading', '');
+  document.getElementById('rawStatus').textContent = 'กำลังโหลดจาก Sheet…';
+  try {
+    const res = await fetch(url + '?action=getVendors');
+    const j   = await res.json();
+    if (j.status === 'success') {
+      if (j.vendor  && j.vendor.length)  { vData = j.vendor;  localStorage.setItem('vp26', JSON.stringify(vData)); }
+      if (j.onboard && j.onboard.length) { oData = j.onboard; localStorage.setItem('vo26', JSON.stringify(oData)); }
+      render();
+      setSyncStatus('ok', new Date().toLocaleTimeString('th-TH'));
+      document.getElementById('rawStatus').textContent = '✓ โหลดจาก Sheet แล้ว';
+      toast('โหลดข้อมูลจาก Sheet สำเร็จ ✓', 'ok');
+      // after loading vendors, pull perf data
+      setTimeout(autoPull, 400);
+    } else {
+      setSyncStatus('err', j.error || 'โหลดไม่สำเร็จ');
+      document.getElementById('rawStatus').textContent = '✗ ' + (j.error || 'error');
+    }
+  } catch (err) {
+    setSyncStatus('err', 'เชื่อมต่อไม่ได้');
+    document.getElementById('rawStatus').textContent = '✗ เชื่อมต่อไม่ได้';
+    // keep using localStorage data silently
+  }
+}
+
+/* ── sync TO Google Sheet ── */
+async function syncSheet() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) { toast('เพิ่ม Apps Script URL ก่อนนะคะ', 'err'); return; }
+  setSyncStatus('saving', '');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'syncAll', vendor: vData, onboard: oData }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    const j = await res.json();
+    if (j.status === 'success') {
+      setSyncStatus('ok', new Date().toLocaleTimeString('th-TH'));
+      toast('Sync สำเร็จ ✓', 'ok');
+    } else {
+      setSyncStatus('err', j.error || 'error');
+      toast('Sync error: ' + (j.error || ''), 'err');
+    }
+  } catch {
+    setSyncStatus('err', 'เชื่อมต่อไม่ได้');
+    toast('เชื่อมต่อ Apps Script ไม่ได้', 'err');
+  }
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 
 function blank() {
@@ -1627,24 +1750,8 @@ function updateStats() {
   document.getElementById('st-gmv').textContent  = tot>0?fmt(tot):'—';
 }
 
-/* ── sync ── */
-async function syncSheet() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  if(!url) { toast('Add Apps Script URL first','err'); return; }
-  toast('Syncing…');
-  try {
-    const res = await fetch(url, {
-      method:'POST',
-      body: JSON.stringify({action:'syncAll', vendor:vData, onboard:oData}),
-      headers:{'Content-Type':'text/plain'}
-    });
-    const j = await res.json();
-    if(j.status==='success') {
-      document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
-      toast('Synced to Google Sheet','ok');
-    } else toast('Sync error','err');
-  } catch { toast('Cannot reach Apps Script','err'); }
-}
+/* ── sync ── (defined above in cloud-sync section) */
+
 
 /* ── auto-pull: called on load + tab switch ── */
 let _pullTimer = null;
@@ -1825,7 +1932,7 @@ document.addEventListener('click', e => {
 
 /* ── freeze settings ── */
 function openFrzPanel(e) {
-  e && e.stopPropagation();
+  e && e.stopPropagation && e.stopPropagation();
   const panel = document.getElementById('frzPanel');
   const isOpen = panel.classList.contains('open');
   document.getElementById('mgrPanel')?.classList.remove('open');
@@ -1833,10 +1940,13 @@ function openFrzPanel(e) {
 
   renderFrzPanel();
 
-  const rect = e.target.getBoundingClientRect();
-  panel.style.right = (window.innerWidth - rect.right) + 'px';
-  panel.style.left  = 'auto';
-  panel.style.top   = (rect.bottom + 6) + 'px';
+  // On mobile, CSS handles positioning via !important; on desktop use button coords
+  if (window.innerWidth > 768 && e && e.target && e.target.getBoundingClientRect) {
+    const rect = e.target.getBoundingClientRect();
+    panel.style.right = (window.innerWidth - rect.right) + 'px';
+    panel.style.left  = 'auto';
+    panel.style.top   = (rect.bottom + 6) + 'px';
+  }
   panel.classList.add('open');
 }
 
@@ -1932,9 +2042,31 @@ document.querySelectorAll('.sb-item').forEach(btn => {
   });
 });
 
-load(); render();
+/* ── sheet link button: sync href with rawUrl input ── */
+function updateSheetLink() {
+  const rawUrl = document.getElementById('rawUrl').value.trim();
+  const btn    = document.getElementById('openSheetBtn');
+  const sbBtn  = document.getElementById('sheetLinkBtn');
+  // use rawUrl if filled, else keep hardcoded default
+  if (rawUrl) {
+    if (btn)   btn.href   = rawUrl;
+    if (sbBtn) sbBtn.href = rawUrl;
+  }
+}
 
-// Escape closes mgr panel
+load(); render();
+updateSheetLink(); // sync button href with saved rawUrl
+
+// After local data is shown, fetch fresh data from Sheet
+setTimeout(() => loadFromSheet(), 300);
+
+// Also reload from Sheet whenever the URL is changed
+document.getElementById('scriptUrl').addEventListener('change', () => {
+  saveUrl();
+  loadFromSheet();
+});
+
+// Escape closes panels
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeMgrPanel();
@@ -1942,8 +2074,8 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
   }
 });
-// Auto-pull on page load (after short delay to let UI paint first)
-setTimeout(autoPull, 500);
+// Auto-pull perf on page load (after short delay to let UI paint first)
+setTimeout(autoPull, 800);
 </script>
 </body>
 </html>
