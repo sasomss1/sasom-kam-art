@@ -85,7 +85,7 @@ body {
   .mob-menu-btn { display: flex; }
 
   /* main takes full width */
-  .main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow: visible; }
 
   /* topbar — single row: hamburger | title | right-actions */
   .topbar {
@@ -144,14 +144,11 @@ body {
     flex-wrap: wrap;
     padding: 6px 12px;
     gap: 4px;
-    row-gap: 4px;
+    row-gap: 6px;
   }
   .urlbar-lbl { font-size: 9px; }
   .urlbar-in { flex: 1; min-width: 0; max-width: 100%; font-size: 10px; }
-  /* hide Raw Sheet label + input on mobile to save space */
-  .urlbar .urlbar-lbl:nth-of-type(2),
-  #rawUrl { display: none; }
-  /* keep เปิด Sheet button visible */
+  /* แสดงทุกช่อง ไม่ซ่อนอะไร */
   #openSheetBtn { flex-shrink: 0; }
   #rawStatus { font-size: 9px; }
 
