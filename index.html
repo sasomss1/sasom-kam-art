@@ -273,6 +273,7 @@ body {
   border-right: 1px solid var(--border);
   flex-shrink: 0;
   white-space: nowrap;
+  overflow: visible;
   user-select: none;
 }
 .hc:last-child { border-right: none; }
@@ -607,7 +608,7 @@ select.c-in {
   display: flex; align-items: center; justify-content: space-between;
   width: 100%; gap: 4px;
 }
-.hc-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc-label { flex: 1; min-width: 0; white-space: nowrap; overflow: visible; }
 .hc-icons { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 
 .hc-sort-btn {
@@ -937,16 +938,16 @@ const ALL_COLS_META = [
   { k:'user_id',     label:'User ID (Asker)',   w:130 },                              // free text
   { k:'name_th',     label:'ชื่อ (TH)',          w:120, cls:'bold' },                  // free text
   { k:'name_en',     label:'ชื่อ (EN)',          w:100 },                              // free text
-  { k:'shop',        label:'Shop / LINE name',  w:165, type:'dyn', dynKey:'shop' },   // dyn (added via typing)
-  { k:'tier',        label:'Tier',              w:72,  type:'dyn', dynKey:'tier',    render:'tier' },
-  { k:'status',      label:'Status',            w:110, type:'dyn', dynKey:'status',  render:'status' },
-  { k:'size',        label:'Size',              w:65,  type:'dyn', dynKey:'size' },
-  { k:'group',       label:'Group',             w:90,  type:'dyn', dynKey:'group' },
-  { k:'category',    label:'Category',          w:140, type:'dyn', dynKey:'category' },
-  { k:'seller_type', label:'Seller type',       w:90,  type:'dyn', dynKey:'seller_type', render:'seller_type' },
-  { k:'brand',       label:'Brand focus',       w:145, type:'dyn', dynKey:'brand' },
-  { k:'supply',      label:'Supply type',       w:105, type:'dyn', dynKey:'supply' },
-  { k:'shipping',    label:'Shipping type',     w:105, type:'dyn', dynKey:'shipping' },
+  { k:'shop',        label:'Shop / LINE name',  w:170, type:'dyn', dynKey:'shop' },
+  { k:'tier',        label:'Tier',              w:80,  type:'dyn', dynKey:'tier',    render:'tier' },
+  { k:'status',      label:'Status',            w:130, type:'dyn', dynKey:'status',  render:'status' },
+  { k:'size',        label:'Size',              w:70,  type:'dyn', dynKey:'size' },
+  { k:'group',       label:'Group',             w:100, type:'dyn', dynKey:'group' },
+  { k:'category',    label:'Category',          w:150, type:'dyn', dynKey:'category' },
+  { k:'seller_type', label:'Seller type',       w:110, type:'dyn', dynKey:'seller_type', render:'seller_type' },
+  { k:'brand',       label:'Brand focus',       w:150, type:'dyn', dynKey:'brand' },
+  { k:'supply',      label:'Supply type',       w:120, type:'dyn', dynKey:'supply' },
+  { k:'shipping',    label:'Shipping type',     w:120, type:'dyn', dynKey:'shipping' },
   { k:'line_group',  label:'Line Group name',   w:190 },                              // free text
   { k:'remark',      label:'Remark',            w:160 },                              // free text
 ];
@@ -1219,7 +1220,7 @@ function makeHC(c, w) {
   const isFilterable = !!filterCols[c.k];
   const labelStyle   = isSort ? 'font-weight:700;color:var(--ink)' : '';
 
-  let html = `<div class="hc" style="width:${w}px;min-width:${w}px;padding:0 6px">
+  let html = `<div class="hc" style="width:${w}px;min-width:${w}px;padding:0 6px" title="${c.label}">
     <div class="hc-inner">
       <span class="hc-label" style="${labelStyle}">${c.label}</span>
       <span class="hc-icons">
