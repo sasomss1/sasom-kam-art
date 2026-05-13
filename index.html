@@ -46,6 +46,110 @@ body {
   display: flex;
 }
 
+/* ── MOBILE HAMBURGER ── */
+.mob-menu-btn {
+  display: none;
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  color: var(--ink2);
+  flex-shrink: 0;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 150;
+}
+.sidebar-overlay.open { display: block; }
+
+@media (max-width: 768px) {
+  html, body { overflow: auto; height: auto; min-height: 100%; }
+  body { flex-direction: column; overflow-x: hidden; }
+
+  /* sidebar becomes a drawer */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 240px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    overflow-y: auto;
+  }
+  .sidebar.mob-open { transform: translateX(0); }
+
+  .mob-menu-btn { display: flex; }
+
+  /* main takes full width */
+  .main { width: 100%; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* topbar wraps */
+  .topbar {
+    height: auto;
+    min-height: 50px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .topbar > div:first-child { flex: 1; min-width: 0; }
+  .topbar-title { font-size: 14px; }
+  .topbar-r {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 0;
+  }
+  .topbar-r .btn, .topbar-r .tb-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+  #addBtn { margin-left: auto; }
+
+  /* filterbar wraps */
+  .filterbar {
+    height: auto;
+    min-height: 40px;
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  .tab-strip { width: 100%; overflow-x: auto; }
+  .filter-r { width: 100%; flex-wrap: wrap; gap: 6px; }
+  .search-wrap input { width: 130px; }
+
+  /* urlbar wraps */
+  .urlbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  .urlbar-in { max-width: 100%; min-width: 140px; }
+
+  /* stats scroll */
+  .stats-row {
+    padding: 10px 12px 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .stat-card { min-width: 80px; flex-shrink: 0; }
+
+  /* sheet area */
+  .sheet-area { padding: 8px 12px 12px; flex: none; min-height: 400px; height: calc(100vh - 280px); }
+
+  /* panels positioning */
+  .mgr-panel { width: calc(100vw - 24px) !important; left: 12px !important; right: 12px !important; }
+  .frz-panel { width: calc(100vw - 24px) !important; left: 12px !important; right: auto !important; }
+
+  /* toast */
+  .toast { right: 12px; bottom: 16px; left: 12px; text-align: center; }
+}
+
 /* ── SIDEBAR ── */
 .sidebar {
   width: 220px;
@@ -693,8 +797,11 @@ select.c-in {
   </div>
 </div>
 
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="mainSidebar">
   <div class="sb-brand">
     <div class="sb-avatar">S</div>
     <div>
@@ -756,6 +863,9 @@ select.c-in {
 
   <!-- TOPBAR -->
   <div class="topbar">
+    <button class="mob-menu-btn" onclick="openSidebar()" aria-label="Menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div>
       <div class="topbar-title" id="pageTitle">Vendor perf 2026</div>
       <div class="topbar-meta" id="pageMeta">Spreadsheet · data saved locally</div>
@@ -1805,6 +1915,22 @@ function toast(msg, type) {
   el.textContent = msg; el.className = 'toast show '+(type||'');
   clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2400);
 }
+
+/* ── mobile sidebar ── */
+function openSidebar() {
+  document.getElementById('mainSidebar').classList.add('mob-open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('mainSidebar').classList.remove('mob-open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+// Close sidebar when a nav item is clicked on mobile
+document.querySelectorAll('.sb-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (window.innerWidth <= 768) closeSidebar();
+  });
+});
 
 load(); render();
 
