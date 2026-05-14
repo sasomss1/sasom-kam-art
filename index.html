@@ -2,7 +2,9 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>KAM ART — Vendor 2026</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
@@ -677,6 +679,226 @@ select.c-in {
   font-size: 8px; transition: all .1s;
 }
 .hcd-opt.on .hcd-chk { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+/* ══════════════════════════════════════
+   MOBILE — iPhone safe area + touch
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Safe area insets for notch/Dynamic Island */
+  body {
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── SIDEBAR → bottom sheet drawer ── */
+  .sidebar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    z-index: 400;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(100%);
+    transition: transform .3s ease;
+    border-radius: 20px 20px 0 0;
+    overflow-y: auto;
+  }
+  .sidebar.open {
+    display: flex;
+    transform: translateY(0);
+  }
+  /* drawer handle */
+  .sidebar::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: #444;
+    border-radius: 2px;
+    margin: 10px auto 6px;
+    flex-shrink: 0;
+  }
+
+  /* ── TOPBAR: hamburger + compact ── */
+  .topbar {
+    height: 48px;
+    padding: 0 12px 0 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    gap: 6px;
+  }
+  .topbar-title { font-size: 14px; }
+  .topbar-meta  { display: none; }
+
+  /* hide non-essential topbar buttons on mobile */
+  #mgrDropBtn, #frzToggleBtn, .btn-ghost:not(#editBadge) { display: none; }
+  /* keep edit badge + add seller */
+  .topbar-r { gap: 6px; }
+  #addBtn { padding: 6px 10px; font-size: 11px; }
+
+  /* hamburger button */
+  #menuToggle {
+    display: flex;
+    align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    border: none; background: none;
+    color: var(--ink); cursor: pointer;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #menuToggle:active { background: var(--border); }
+
+  /* ── FILTER BAR: scrollable tabs ── */
+  .filterbar {
+    height: auto;
+    padding: 0 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .tab-strip { gap: 0; }
+  .ftab { height: 34px; padding: 0 12px; font-size: 11px; }
+  .filter-r { width: 100%; gap: 6px; }
+  .search-wrap { flex: 1; }
+  .search-wrap input { width: 100%; }
+  .row-cnt { display: none; }
+
+  /* ── URL BAR: stack vertically, hide on mobile by default ── */
+  .urlbar {
+    display: none; /* hidden on mobile — configure on desktop */
+  }
+
+  /* ── STATS: horizontal scroll ── */
+  .stats-row {
+    padding: 8px 12px 0;
+    overflow-x: auto;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .stats-row::-webkit-scrollbar { display: none; }
+  .stat-card { min-width: 72px; padding: 8px 12px; flex-shrink: 0; }
+  .stat-n { font-size: 17px; }
+  .stat-l { font-size: 9px; }
+
+  /* ── SHEET AREA ── */
+  .sheet-area { padding: 8px 8px 0; }
+  .sheet-card { border-radius: var(--radius); }
+
+  /* ── TABLE: bigger touch targets ── */
+  .fc, .sc { min-height: 44px; }
+  .ia { width: 36px; height: 36px; }
+  .row-acts { opacity: 1; } /* always show on mobile */
+
+  /* ── FREEZE PANEL: full-width bottom sheet ── */
+  .frz-panel {
+    position: fixed !important;
+    left: 0 !important; right: 0 !important; top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-height: 60vh;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 350;
+  }
+
+  /* ── MGR PANEL: full-width bottom sheet ── */
+  .mgr-panel {
+    position: fixed !important;
+    left: 0 !important; right: 0 !important; top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 350;
+    max-height: 70vh;
+  }
+
+  /* ── MODALS: full-width ── */
+  .modal {
+    width: calc(100vw - 32px);
+    max-width: 400px;
+  }
+
+  /* ── LOCK SCREEN ── */
+  .lock-box { width: calc(100vw - 48px); }
+
+  /* ── ADD ROW BUTTON: taller tap target ── */
+  .add-row { height: 48px; font-size: 12px; }
+
+  /* ── HC DROPDOWN: full-screen on mobile ── */
+  .hc-drop {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: env(safe-area-inset-bottom) !important;
+    width: auto !important;
+    border-radius: 16px 16px 0 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .hcd-opts { max-height: 40vh; }
+  .hcd-opt { padding: 12px 16px; font-size: 14px; }
+
+  /* ── TOAST: above safe area ── */
+  .toast {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 16px; right: 16px;
+    text-align: center;
+  }
+
+  /* ── MGR MENU dropdown → bottom sheet ── */
+  #mgrMenu {
+    position: fixed !important;
+    left: 0 !important; right: 0 !important;
+    top: auto !important; bottom: 0 !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    max-height: 70vh; overflow-y: auto;
+  }
+
+  /* ── SIDEBAR OVERLAY backdrop ── */
+  #sidebarBackdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 399;
+    backdrop-filter: blur(2px);
+  }
+  #sidebarBackdrop.show { display: block; }
+
+  /* show Freeze & Manage in sidebar on mobile */
+  #mobileFrzBtn, #mobileMgrBtn {
+    display: flex !important;
+  }
+}
+
+@keyframes rtpulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.7); }
+}
+.rt-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.tb-badge.view .rt-dot { background: var(--ink4); }
+
+/* Desktop: hide mobile-only elements */
+@media (min-width: 769px) {
+  #menuToggle { display: none; }
+  #sidebarBackdrop { display: none !important; }
+  #mobileFrzBtn, #mobileMgrBtn { display: none; }
+}
 </style>
 </head>
 <body>
@@ -693,8 +915,11 @@ select.c-in {
   </div>
 </div>
 
+<!-- SIDEBAR BACKDROP (mobile) -->
+<div id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sb-brand">
     <div class="sb-avatar">S</div>
     <div>
@@ -754,6 +979,20 @@ select.c-in {
       </span>
       Clear all data
     </button>
+
+    <!-- Mobile-only buttons -->
+    <button class="sb-item" id="mobileFrzBtn" onclick="closeSidebar();openFrzPanelMobile()" style="display:none">
+      <span class="sb-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
+      </span>
+      Freeze columns
+    </button>
+    <button class="sb-item" id="mobileMgrBtn" onclick="closeSidebar();toggleMgrMenuMobile()" style="display:none">
+      <span class="sb-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      </span>
+      Manage lists
+    </button>
   </div>
 </div>
 
@@ -762,6 +1001,10 @@ select.c-in {
 
   <!-- TOPBAR -->
   <div class="topbar">
+    <!-- Hamburger (mobile only) -->
+    <button id="menuToggle" onclick="openSidebar()" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div>
       <div class="topbar-title" id="pageTitle">Vendor perf 2026</div>
       <div class="topbar-meta" id="pageMeta">Spreadsheet · data saved locally</div>
@@ -770,6 +1013,10 @@ select.c-in {
       <button class="tb-badge view" id="editBadge" onclick="toggleEdit()">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span id="editLabel">View only</span>
+      </button>
+      <button class="tb-badge view" id="realtimeBtn" onclick="toggleRealtime()" title="Real-time sync">
+        <span class="rt-dot"></span>
+        <span>Paused</span>
       </button>
       <div style="position:relative;display:inline-block">
         <button class="btn btn-ghost" id="mgrDropBtn" onclick="toggleMgrMenu(event)">
@@ -1095,17 +1342,98 @@ document.getElementById('lockScreen').addEventListener('click', e => {
 
 /* ── persist ── */
 function load() {
-  const filterEmpty = rows => rows.filter(r =>
-    r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
-  );
-  vData = filterEmpty(JSON.parse(localStorage.getItem('vp26') || '[]'));
-  oData = filterEmpty(JSON.parse(localStorage.getItem('vo26') || '[]'));
+  // Load URL + settings from localStorage
   document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
   document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
   const savedPins = localStorage.getItem('pinnedCols26');
   if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
   loadDynOpts();
+
+  // Load cached data first so UI shows something immediately
+  const filterEmpty = rows => rows.filter(r =>
+    r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
+  );
+  vData = filterEmpty(JSON.parse(localStorage.getItem('vp26') || '[]'));
+  oData = filterEmpty(JSON.parse(localStorage.getItem('vo26') || '[]'));
 }
+
+// Pull vendor+onboard data FROM Google Sheet (so all users see the same data)
+// skipIfEditing = true means don't overwrite while someone is mid-edit
+async function loadFromSheet(skipIfEditing) {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) return;
+
+  // Don't pull if user is currently editing a row — would clobber unsaved input
+  if (skipIfEditing && editing) return;
+
+  document.getElementById('rawStatus').textContent = 'Loading…';
+  try {
+    const res = await fetch(url + '?action=getAll&t=' + Date.now()); // cache-bust
+    const j   = await res.json();
+    if (j.status === 'success') {
+      const filterEmpty = rows => (rows||[]).filter(r =>
+        r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
+      );
+      const newV = filterEmpty(j.vendor  || []);
+      const newO = filterEmpty(j.onboard || []);
+
+      // Only re-render if data actually changed (avoid flicker)
+      const changed =
+        JSON.stringify(newV.map(r=>r._id+r.status+r.shop)) !==
+        JSON.stringify(vData.map(r=>r._id+r.status+r.shop)) ||
+        JSON.stringify(newO.map(r=>r._id+r.status+r.shop)) !==
+        JSON.stringify(oData.map(r=>r._id+r.status+r.shop));
+
+      vData = newV;
+      oData = newO;
+      localStorage.setItem('vp26', JSON.stringify(vData));
+      localStorage.setItem('vo26', JSON.stringify(oData));
+
+      if (changed) render();
+      document.getElementById('rawStatus').textContent = '● live · ' + new Date().toLocaleTimeString('th-TH');
+      document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
+    } else {
+      document.getElementById('rawStatus').textContent = '⚠ load error';
+    }
+  } catch {
+    document.getElementById('rawStatus').textContent = '○ offline (cache)';
+  }
+}
+
+/* ── Real-time polling ── */
+let _realtimeTimer = null;
+const POLL_INTERVAL = 30000; // 30 seconds
+
+function startRealtime() {
+  stopRealtime();
+  _realtimeTimer = setInterval(() => {
+    loadFromSheet(true); // skip if editing
+  }, POLL_INTERVAL);
+  updateRealtimeBadge(true);
+}
+
+function stopRealtime() {
+  clearInterval(_realtimeTimer);
+  _realtimeTimer = null;
+  updateRealtimeBadge(false);
+}
+
+function toggleRealtime() {
+  if (_realtimeTimer) stopRealtime();
+  else { loadFromSheet(false); startRealtime(); }
+}
+
+function updateRealtimeBadge(on) {
+  const btn = document.getElementById('realtimeBtn');
+  if (!btn) return;
+  btn.className = 'tb-badge ' + (on ? 'edit' : 'view');
+  btn.querySelector('span').textContent = on ? 'Live' : 'Paused';
+  btn.title = on ? 'Real-time ON — click to pause' : 'Real-time OFF — click to resume';
+  // Pulse dot
+  const dot = btn.querySelector('.rt-dot');
+  if (dot) dot.style.animation = on ? 'rtpulse 1.5s ease-in-out infinite' : 'none';
+}
+
 function persist() {
   localStorage.setItem('vp26', JSON.stringify(vData));
   localStorage.setItem('vo26', JSON.stringify(oData));
@@ -1143,16 +1471,19 @@ function addRow() {
 }
 function startEdit(id) {
   if (!canEdit) { showLock(); return; }
-  editing = id; render();
+  editing = id;
+  // Pause real-time while editing to avoid overwriting user input
+  stopRealtime();
+  render();
   setTimeout(() => { const el = document.querySelector(`.row[data-id="${id}"] .c-in`); if(el) el.focus(); }, 40);
 }
 function saveRow(id) {
   const r = getData().find(x=>x._id===id); if(r) delete r._new;
-  editing = null; persist(); render(); syncSheet();
+  editing = null; persist(); render(); syncSheet(true);
   toast('Saved');
-  if (r && r.email) {
-    setTimeout(() => pullPerfData([id]), 300);
-  }
+  if (r && r.email) setTimeout(() => pullPerfData([id]), 300);
+  // Resume real-time after save
+  startRealtime();
 }
 function cancelEdit(id) {
   const d = getData(); const i = d.findIndex(x=>x._id===id);
@@ -1162,6 +1493,8 @@ function cancelEdit(id) {
     persist();
   }
   editing=null; render();
+  // Resume real-time after cancel
+  startRealtime();
 }
 
 // FIX BUG 2: setF uses event delegation via data-attributes — no inline oninput string interpolation issues
@@ -1213,7 +1546,7 @@ function confirmDel(){
     oData = oData.filter(x => x._id !== idToDelete);
   }
 
-  persist(); render(); syncSheet(); toast('Removed');
+  persist(); render(); syncSheet(true); toast('Removed');
 }
 
 function switchTab(name, el) {
@@ -1612,12 +1945,12 @@ function updateStats() {
 
 /* ── sync ── */
 let _lastSyncHash = '';
-async function syncSheet() {
+async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) return;
   const hash = JSON.stringify(vData.length) + JSON.stringify(oData.length) +
-               (vData[0]?._id || '') + (oData[0]?._id || '');
-  if (hash === _lastSyncHash) return;
+               JSON.stringify(vData.map(r=>r._id)) + JSON.stringify(oData.map(r=>r._id));
+  if (!force && hash === _lastSyncHash) return;
   _lastSyncHash = hash;
   toast('Syncing…');
   try {
@@ -1904,14 +2237,74 @@ function toast(msg, type) {
 
 load(); render();
 
+// Initial load from Sheet, then start real-time polling
+setTimeout(async () => {
+  await loadFromSheet(false);
+  startRealtime();
+}, 100);
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeMgrPanel();
     document.getElementById('frzPanel')?.classList.remove('open');
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
+    closeSidebar();
   }
 });
-setTimeout(autoPull, 500);
+// autoPull is now triggered from loadFromSheet after data loads
+
+/* ══════════════════════════════
+   MOBILE helpers
+══════════════════════════════ */
+function isMobile() { return window.innerWidth <= 768; }
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('show');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
+}
+
+// On mobile, switchTab also closes sidebar
+const _origSwitchTab = switchTab;
+function switchTab(name, el) {
+  _origSwitchTab(name, el);
+  closeSidebar();
+}
+
+// Freeze panel on mobile: just open it (CSS makes it bottom sheet)
+function openFrzPanelMobile() {
+  renderFrzPanel();
+  document.getElementById('frzPanel').classList.add('open');
+}
+
+// Manage lists on mobile: show the panel as bottom sheet
+function toggleMgrMenuMobile() {
+  // Show a bottom sheet picker for which list to manage
+  const dynCols = ALL_COLS_META.filter(c => c.type === 'dyn');
+  const menu = document.getElementById('mgrMenu');
+  menu.innerHTML = `
+    <div style="padding:14px 16px 8px;font-size:13px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--border)">Manage lists</div>
+    ` + dynCols.map(c =>
+    `<div style="padding:13px 16px;font-size:14px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)"
+      onclick="openMgrPanel('${c.dynKey}',null);this.closest('#mgrMenu').style.display='none'">
+      <span style="color:var(--ink4);font-size:11px;min-width:20px;text-align:right">${(dynOpts[c.dynKey]||[]).length}</span>
+      ${c.label}
+    </div>`
+  ).join('') + `<div style="height:env(safe-area-inset-bottom)"></div>`;
+  menu.style.display = 'block';
+}
+
+// Prevent double-tap zoom on buttons (iOS)
+document.addEventListener('touchend', e => {
+  if (e.target.closest('button, .ia, .ftab, .sb-item, .hcd-opt')) {
+    e.preventDefault();
+    e.target.click();
+  }
+}, { passive: false });
 </script>
 </body>
 </html>
