@@ -921,9 +921,9 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
     <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
     Pull Perf Data
   </button>
-  <button class="sb-item" onclick="syncSheet()">
-    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></span>
-    Sync to Sheet
+  <button class="sb-item" onclick="syncSheet(true)">
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
+    Save to Sheet
   </button>
   <button class="sb-item" onclick="exportCSV()">
     <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
@@ -987,9 +987,9 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span id="editLabel">View only</span>
       </button>
-      <button class="tb-badge view" id="realtimeBtn" onclick="toggleRealtime()" title="Real-time sync">
-        <span class="rt-dot"></span>
-        <span>Paused</span>
+      <button class="tb-badge view" id="realtimeBtn" onclick="loadFromSheet(false)" title="ดึงข้อมูลล่าสุดจาก Sheet">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
+        <span>Load</span>
       </button>
       <div style="position:relative;display:inline-block">
         <button class="btn btn-ghost" id="mgrDropBtn" onclick="toggleMgrMenu(event)">
@@ -1019,9 +1019,9 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
         <input type="text" id="searchInput" placeholder="Search email, shop, KAM…" oninput="render()">
       </div>
       <span class="row-cnt" id="rowCount">—</span>
-      <button class="btn btn-green" onclick="syncSheet()">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        Sync
+      <button class="btn btn-green" onclick="syncSheet(true)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save to Sheet
       </button>
     </div>
   </div>
@@ -1449,7 +1449,7 @@ async function loadFromSheet(skipIfEditing) {
       localStorage.setItem('vo26', JSON.stringify(oData));
       localStorage.setItem('xb26', JSON.stringify(xbData));
       if (changed) render();
-      document.getElementById('rawStatus').textContent = '● live · ' + new Date().toLocaleTimeString('th-TH');
+      document.getElementById('rawStatus').textContent = '✓ loaded · ' + new Date().toLocaleTimeString('th-TH');
       document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
     } else {
       document.getElementById('rawStatus').textContent = '⚠ load error';
@@ -1502,14 +1502,14 @@ function addRow() {
 }
 function startEdit(id) {
   if (!canEdit) { showLock(); return; }
-  editing = id; stopRealtime(); render();
+  editing = id; render();
   setTimeout(() => { const el = document.querySelector(`.row[data-id="${id}"] .c-in`); if(el) el.focus(); }, 40);
 }
 function saveRow(id) {
   const r = getData().find(x=>x._id===id); if(r) delete r._new;
-  editing = null; persist(); render(); syncSheet(true); toast('Saved');
+  editing = null; persist(); render();
+  toast('Saved locally — กด Sync เพื่อบันทึกลง Sheet');
   if (r && r.email) setTimeout(() => pullPerfData([id]), 300);
-  startRealtime();
 }
 function cancelEdit(id) {
   const d = getData(); const i = d.findIndex(x=>x._id===id);
@@ -1518,7 +1518,7 @@ function cancelEdit(id) {
     if(tab==='vendor') vData=d; else if(tab==='onboard') oData=d; else xbData=d;
     persist();
   }
-  editing=null; render(); startRealtime();
+  editing=null; render();
 }
 function setF(id, k, v) {
   const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id);
@@ -1547,7 +1547,7 @@ function confirmDel() {
   if (tabToDelete === 'vendor')   vData  = vData.filter(x => x._id !== idToDelete);
   else if (tabToDelete === 'onboard') oData = oData.filter(x => x._id !== idToDelete);
   else xbData = xbData.filter(x => x._id !== idToDelete);
-  persist(); render(); syncSheet(true); toast('Removed');
+  persist(); render(); toast('Removed — กด Sync เพื่อบันทึกลง Sheet');
 }
 function switchTab(name, el) {
   tab=name; editing=null;
@@ -2208,38 +2208,25 @@ function updateStats() {
 
 /* ── sync ── */
 let _lastSyncHash = '';
-let _syncCooldownTimer = null;
 
 async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
-  if(!url) return;
+  if(!url) { toast('กรุณาใส่ Apps Script URL ก่อน','err'); return; }
   const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(xbData.length)+
                JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id))+JSON.stringify(xbData.map(r=>r._id));
-  if (!force && hash === _lastSyncHash) return;
+  if (!force && hash === _lastSyncHash) { toast('ไม่มีการเปลี่ยนแปลง'); return; }
   _lastSyncHash = hash;
-  toast('Syncing…');
-
-  // Pause real-time polling while syncing + cooldown
-  // to prevent Sheet pulling back stale data before Apps Script finishes saving
-  stopRealtime();
-  clearTimeout(_syncCooldownTimer);
-
+  toast('กำลัง Sync…');
   try {
     const res = await fetch(url, { method:'POST', body:JSON.stringify({action:'syncAll',vendor:vData,onboard:oData,offboard:xbData}), headers:{'Content-Type':'text/plain'} });
     const j = await res.json();
     if(j.status==='success') {
       document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
-      toast('Synced to Google Sheet','ok');
-      // Wait 8s for Apps Script to finish writing before resuming poll
-      _syncCooldownTimer = setTimeout(() => startRealtime(), 8000);
+      toast('Sync สำเร็จ ✓','ok');
     } else {
-      toast('Sync error','err');
-      startRealtime();
+      toast('Sync error: ' + (j.message||'unknown'),'err');
     }
-  } catch {
-    toast('Cannot reach Apps Script','err');
-    startRealtime();
-  }
+  } catch(e) { toast('ไม่สามารถเชื่อมต่อ Apps Script ได้','err'); }
 }
 
 let _pullTimer = null;
@@ -2462,8 +2449,8 @@ function dedupeCurrentTab() {
   if (tab === 'vendor')       vData  = deduped;
   else if (tab === 'onboard') oData  = deduped;
   else                        xbData = deduped;
-  persist(); render(); syncSheet(true);
-  toast(`ลบ ${removed} duplicate rows แล้ว`, 'ok');
+  persist(); render();
+  toast(`ลบ ${removed} duplicate rows แล้ว — กด Sync เพื่อบันทึก`, 'ok');
   closeSidebar();
 }
 function toast(msg, type) {
@@ -2473,7 +2460,7 @@ function toast(msg, type) {
 }
 
 load(); render();
-setTimeout(async () => { await loadFromSheet(false); startRealtime(); }, 100);
+// No auto-pull on startup — use Sync button to load/save
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
