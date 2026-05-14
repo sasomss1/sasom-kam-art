@@ -1084,8 +1084,11 @@ document.getElementById('lockScreen').addEventListener('click', e => {
 
 /* ── persist ── */
 function load() {
-  vData = JSON.parse(localStorage.getItem('vp26') || '[]');
-  oData = JSON.parse(localStorage.getItem('vo26') || '[]');
+  const filterEmpty = rows => rows.filter(r =>
+    r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
+  );
+  vData = filterEmpty(JSON.parse(localStorage.getItem('vp26') || '[]'));
+  oData = filterEmpty(JSON.parse(localStorage.getItem('vo26') || '[]'));
   document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
   document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
   const savedPins = localStorage.getItem('pinnedCols26');
@@ -1156,12 +1159,18 @@ function askDel(id) {
   document.getElementById('delName').textContent=(r&&(r.shop||r.email))||'this seller';
   document.getElementById('delModal').classList.add('open');
 }
-function closeMdl(){ document.getElementById('delModal').classList.remove('open'); delId=null; }
+function closeMdl(){
+  document.getElementById('delModal').classList.remove('open');
+  // delId is reset AFTER confirmDel captures it (see confirmDel)
+  setTimeout(() => { delId = null; }, 0);
+}
 function confirmDel(){
   if(!delId) return;
-  if(tab==='vendor') vData=vData.filter(x=>x._id!==delId);
-  else oData=oData.filter(x=>x._id!==delId);
-  persist(); closeMdl(); render(); syncSheet(); toast('Removed');
+  const idToDelete = delId; // capture before closeMdl resets it
+  closeMdl();
+  if(tab==='vendor') vData=vData.filter(x=>x._id!==idToDelete);
+  else oData=oData.filter(x=>x._id!==idToDelete);
+  persist(); render(); syncSheet(); toast('Removed');
 }
 function switchTab(name, el) {
   tab=name; editing=null;
@@ -1518,9 +1527,15 @@ function updateStats() {
 }
 
 /* ── sync ── */
+let _lastSyncHash = '';
 async function syncSheet() {
   const url = document.getElementById('scriptUrl').value.trim();
-  if(!url) { toast('Add Apps Script URL first','err'); return; }
+  if(!url) return; // silent if no URL
+  // Skip if data hasn't changed since last sync
+  const hash = JSON.stringify(vData.length) + JSON.stringify(oData.length) +
+               (vData[0]?._id || '') + (oData[0]?._id || '');
+  if (hash === _lastSyncHash) return; // no change
+  _lastSyncHash = hash;
   toast('Syncing…');
   try {
     const res = await fetch(url, {
@@ -1542,10 +1557,11 @@ function autoPull() {
   clearTimeout(_pullTimer);
   _pullTimer = setTimeout(() => {
     const url = document.getElementById('scriptUrl').value.trim();
-    if (!url) return; // no script URL configured yet
+    if (!url) return;
     const data = getData();
     if (!data.length) return;
-    pullPerfData(); // pull all
+    if (delId) return; // don't pull while delete modal is open
+    pullPerfData();
   }, 200);
 }
 
@@ -1567,7 +1583,7 @@ async function pullPerfData(specificIds) {
   // Mark as pulling
   targets.forEach(r => r._pulling = true);
   document.getElementById('rawStatus').textContent = 'กำลังดึงข้อมูล…';
-  render();
+  if (!delId) render(); // don't re-render (and close modal) while delete is pending
 
   try {
     const res = await fetch(url + '?action=getPerf&emails=' + encodeURIComponent(emails.join(',')));
@@ -1584,10 +1600,9 @@ async function pullPerfData(specificIds) {
         r.failed  = perf.failed  || {};
         delete r._pulling;
       });
-      persist();
+      persist(); // save locally only — no Sheet sync on auto-pull
       render();
       document.getElementById('rawStatus').textContent = '✓ pulled ' + new Date().toLocaleTimeString('th-TH');
-      toast('ดึงข้อมูล Perf สำเร็จ ✓', 'ok');
     } else {
       targets.forEach(r => delete r._pulling);
       render();
