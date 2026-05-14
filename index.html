@@ -1302,7 +1302,7 @@ const PWD    = 'SASOMART';
 const DYN_DEFAULTS = {
   kam:         ['First','Faii','Remote'],
   tier:        ['tier 1','tier 2','tier 3','tier 4'],
-  status:      ['VVIP','Active','Inactive','Churn','Waiting listing'],
+  status:      ['VVIP','Active','Focus','Inactive','Churn','Waiting listing','Offboard'],
   size:        ['S','M','L','XL'],
   group:       ['ART','TCG','Street','Collectibles','Luxury'],
   category:    ['TCG','Street','Collectibles','Luxury','Sneaker','Apparel'],
@@ -1381,7 +1381,9 @@ function getColOrder() {
 }
 function getFrozen() { return getColOrder().filter(c => pinnedKeys.has(c.k) || c.alwaysPin); }
 
-const ONBOARD_MONTH = { k:'month', label:'เดือน Onboard', w:110, type:'sel', opts:MONTHS };
+const ONBOARD_MONTH  = { k:'month',           label:'เดือน Onboard',  w:110, type:'sel', opts:MONTHS };
+const OFFBOARD_SOURCE = { k:'offboard_source', label:'ที่มา',           w:180 };
+const OFFBOARD_DATE   = { k:'offboard_date',   label:'วันที่ Offboard', w:120 };
 
 // ── METRIC SECTIONS: now include sort key ──
 const MONTHLY_SECS = [
@@ -1556,7 +1558,8 @@ const getData = () => tab === 'vendor' ? vData : tab === 'onboard' ? oData : xbD
 function getInfoCols() {
   const frozenKeys = new Set(getFrozen().map(c => c.k));
   const scrollCols = getColOrder().filter(c => !frozenKeys.has(c.k));
-  if (tab === 'onboard' || tab === 'offboard') return [ONBOARD_MONTH, ...scrollCols.filter(c => c.k !== 'month')];
+  if (tab === 'onboard')  return [ONBOARD_MONTH,  ...scrollCols.filter(c => c.k !== 'month')];
+  if (tab === 'offboard') return [OFFBOARD_SOURCE, OFFBOARD_DATE, ...scrollCols.filter(c => !['month','offboard_source','offboard_date'].includes(c.k))];
   return scrollCols;
 }
 
@@ -1592,9 +1595,19 @@ document.getElementById('lockScreen').addEventListener('click', e => {
 });
 
 /* ── persist ── */
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzokwOPVovBfBziZ4Gidpv3xDJ7/exec';
+const DEFAULT_RAW_URL    = 'https://docs.google.com/spreadsheets/d/1NK2giNBWmKljwCnnrxP_cTYSi';
+
 function load() {
-  document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
-  document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
+  // Use saved URL or fall back to embedded default
+  const savedScript = localStorage.getItem('surl26') || DEFAULT_SCRIPT_URL;
+  const savedRaw    = localStorage.getItem('srawurl26') || DEFAULT_RAW_URL;
+  document.getElementById('scriptUrl').value = savedScript;
+  document.getElementById('rawUrl').value    = savedRaw;
+  // Save defaults so they persist
+  if (!localStorage.getItem('surl26')) localStorage.setItem('surl26', savedScript);
+  if (!localStorage.getItem('srawurl26')) localStorage.setItem('srawurl26', savedRaw);
+
   const savedPins = localStorage.getItem('pinnedCols26');
   if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
   loadDynOpts();
@@ -1606,33 +1619,30 @@ function load() {
 
 async function loadFromSheet(skipIfEditing) {
   const url = document.getElementById('scriptUrl').value.trim();
-  if (!url) return;
+  if (!url) { toast('กรุณาใส่ Apps Script URL ก่อน', 'err'); return; }
   if (skipIfEditing && editing) return;
   document.getElementById('rawStatus').textContent = 'Loading…';
+  toast('กำลังโหลดข้อมูล…');
   try {
     const res = await fetch(url + '?action=getAll&t=' + Date.now());
     const j   = await res.json();
     if (j.status === 'success') {
       const filterEmpty = rows => (rows||[]).filter(r => r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no);
-      const newV  = filterEmpty(j.vendor   || []);
-      const newO  = filterEmpty(j.onboard  || []);
-      const newXB = filterEmpty(j.offboard || []);
-      const changed =
-        JSON.stringify(newV.map(r=>r._id+r.status+r.shop))  !== JSON.stringify(vData.map(r=>r._id+r.status+r.shop)) ||
-        JSON.stringify(newO.map(r=>r._id+r.status+r.shop))  !== JSON.stringify(oData.map(r=>r._id+r.status+r.shop)) ||
-        JSON.stringify(newXB.map(r=>r._id+r.status+r.shop)) !== JSON.stringify(xbData.map(r=>r._id+r.status+r.shop));
-      vData = newV; oData = newO; xbData = newXB;
-      localStorage.setItem('vp26', JSON.stringify(vData));
-      localStorage.setItem('vo26', JSON.stringify(oData));
-      localStorage.setItem('xb26', JSON.stringify(xbData));
-      if (changed) render();
+      vData  = filterEmpty(j.vendor   || []);
+      oData  = filterEmpty(j.onboard  || []);
+      xbData = filterEmpty(j.offboard || []);
+      persist();
+      render(); // always render after load
       document.getElementById('rawStatus').textContent = '✓ loaded · ' + new Date().toLocaleTimeString('th-TH');
       document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
+      toast(`โหลดสำเร็จ — ${vData.length} vendors`, 'ok');
     } else {
       document.getElementById('rawStatus').textContent = '⚠ load error';
+      toast('Load error: ' + (j.message||'unknown'), 'err');
     }
-  } catch {
+  } catch(e) {
     document.getElementById('rawStatus').textContent = '○ offline (cache)';
+    toast('ไม่สามารถเชื่อมต่อได้: ' + e.message, 'err');
   }
 }
 
@@ -1667,7 +1677,7 @@ function uid() {
 }
 function blank() {
   const len = tab === 'vendor' ? vData.length : tab === 'onboard' ? oData.length : xbData.length;
-  return { _id:uid(), no:String(len+1), shop:'', email:'', user_id:'', name_th:'', name_en:'', kam:'', month:'', tier:'', status:'', size:'', group:'', category:'', seller_type:'TH', brand:'', supply:'', shipping:'', line_group:'', remark:'', gmv:{}, orders:{}, listing:{}, failed:{} };
+  return { _id:uid(), no:String(len+1), shop:'', email:'', user_id:'', name_th:'', name_en:'', kam:'', month:'', tier:'', status:'', size:'', group:'', category:'', seller_type:'TH', brand:'', supply:'', shipping:'', line_group:'', remark:'', offboard_source:'', offboard_date:'', gmv:{}, orders:{}, listing:{}, failed:{} };
 }
 
 /* ── crud ── */
@@ -1683,7 +1693,39 @@ function startEdit(id) {
   setTimeout(() => { const el = document.querySelector(`.row[data-id="${id}"] .c-in`); if(el) el.focus(); }, 40);
 }
 function saveRow(id) {
-  const r = getData().find(x=>x._id===id); if(r) delete r._new;
+  const r = getData().find(x=>x._id===id);
+  if (!r) return;
+  delete r._new;
+
+  const statusVal = (r.status||'').toLowerCase().trim();
+  const srcTab = tab;
+
+  // Auto-move to Offboard tab
+  const isOffboard = statusVal === 'offboard';
+  const isReject   = srcTab === 'onboard' && statusVal === 'reject';
+
+  if ((isOffboard || isReject) && srcTab !== 'offboard') {
+    r.offboard_source = isReject
+      ? 'Rejected from Onboard'
+      : (srcTab === 'vendor' ? 'Offboarded from Vendor' : 'Offboarded from Onboard');
+    r.offboard_date = new Date().toLocaleDateString('th-TH');
+    if (isReject) r.status = 'Reject';
+
+    // Remove from source
+    if (srcTab === 'vendor')       vData = vData.filter(x=>x._id!==id);
+    else if (srcTab === 'onboard') oData = oData.filter(x=>x._id!==id);
+
+    // Add to offboard if not already there
+    if (!xbData.find(x=>x._id===id)) xbData.push(r);
+
+    editing = null; persist();
+    setTimeout(() => {
+      switchTab('offboard', null);
+      toast(`ย้าย ${r.email||r.shop||'seller'} → Offboard แล้ว ✓`, 'ok');
+    }, 80);
+    return;
+  }
+
   editing = null; persist(); render();
   toast('Saved locally — กด Sync เพื่อบันทึกลง Sheet');
   if (r && r.email) setTimeout(() => pullPerfData([id]), 300);
@@ -1771,7 +1813,8 @@ const CHIP_SPECIAL = {
   'inactive':       { bg:'#f8fafc', color:'#64748b', border:'#e2e8f0' },
   'unactive':       { bg:'#f8fafc', color:'#64748b', border:'#e2e8f0' },
   'churn':          { bg:'#f9fafb', color:'#9ca3af', border:'#e5e7eb', extra:'text-decoration:line-through' },
-  'offboard':       { bg:'#fff1f2', color:'#be123c', border:'#fecdd3' },
+  'offboard':        { bg:'#fff1f2', color:'#be123c', border:'#fecdd3' },
+  'reject':          { bg:'#fff1f2', color:'#be123c', border:'#fecdd3' },
   'waiting contact':{ bg:'#fefce8', color:'#a16207', border:'#fef08a' },
   'waiting listing':{ bg:'#fefce8', color:'#a16207', border:'#fef08a' },
   // sizes — same as tier
@@ -2990,7 +3033,10 @@ function toast(msg, type) {
 }
 
 load(); render();
-// No auto-pull on startup — use Sync button to load/save
+// If no local data, auto-load from Sheet immediately
+if (!vData.length && !oData.length && !xbData.length) {
+  setTimeout(() => loadFromSheet(false), 300);
+}
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
