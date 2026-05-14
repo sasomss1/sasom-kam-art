@@ -1825,6 +1825,12 @@ function render() {
   const FROZEN = getFrozen();
   const frozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
 
+  // Compute sticky left offsets — needed by both header and body cells
+  const frozenLeftOf = {};
+  let _left = 0;
+  FROZEN.forEach(c => { frozenLeftOf[c.k] = _left; _left += getColW(c.k); });
+  const lastFrozenKey = FROZEN.length ? FROZEN[FROZEN.length-1].k : null;
+
   // Compute sticky offsets for frozen header cells (same as body)
   let _hLeft = 0;
   const frozenHeadHTML = FROZEN.map(c => {
@@ -1905,16 +1911,6 @@ function render() {
 
   document.getElementById('scrollHeadInner').innerHTML = sh;
   document.getElementById('tblHead2').style.display = 'none';
-
-  // Compute sticky left offsets for frozen cols
-  const frozenLeftOf = {};
-  let _left = 0;
-  FROZEN.forEach(c => {
-    frozenLeftOf[c.k] = _left;
-    _left += getColW(c.k);
-  });
-  // Mark last frozen col for border
-  const lastFrozenKey = FROZEN.length ? FROZEN[FROZEN.length-1].k : null;
 
   if(!filtered.length) {
     const hasRangeFilter = Object.keys(activeRangeFilters).length > 0;
