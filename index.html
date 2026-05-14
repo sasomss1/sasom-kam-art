@@ -1740,7 +1740,7 @@ function cancelEdit(id) {
   editing=null; render();
 }
 function setF(id, k, v) {
-  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id);
+  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id) || xbData.find(x=>x._id===id);
   if (r) r[k] = v;
 }
 function askDel(id) {
