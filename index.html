@@ -634,6 +634,27 @@ select.c-in {
 .hc-filter-btn:hover { background: var(--border); color: var(--ink); }
 .hc-filter-btn.active { background: var(--ink); color: #fff; }
 
+/* ── column resize handle ── */
+.hc { overflow: visible; }
+.col-resize-handle {
+  position: absolute;
+  right: -3px; top: 0; bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+}
+.col-resize-handle::after {
+  content: '';
+  width: 2px; height: 60%;
+  background: transparent;
+  border-radius: 1px;
+  transition: background .15s;
+}
+.col-resize-handle:hover::after,
+.col-resize-handle.dragging::after { background: var(--amber); }
+body.col-resizing { cursor: col-resize !important; user-select: none !important; }
+
 /* ── metric range filter panel ── */
 .range-drop {
   display: none;
@@ -891,6 +912,10 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
     <button class="sb-item" onclick="confirmClearAll()" style="color:#e57373;margin-top:4px">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></span>
       Clear all data
+    </button>
+    <button class="sb-item" onclick="resetColWidths()" style="color:#888;margin-top:2px">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><line x1="4" y1="4" x2="20" y2="20"/></svg></span>
+      Reset col widths
     </button>
     <button class="sb-item sb-mobile-only" id="mobileFrzBtn" onclick="closeSidebar();openFrzPanelMobile()">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg></span>
@@ -1505,14 +1530,137 @@ function fmt(n) {
 }
 function gmvTot(r){ return Object.values(r.gmv||{}).reduce((a,b)=>a+(+b||0),0); }
 
+// ── Column width store ──
+// Keyed by column key (or metric period key like 'gmv_tot', 'gmv_Q1', 'gmv_Jan')
+const COL_DEFAULT_WIDTHS = {};
+ALL_COLS_META.forEach(c => { COL_DEFAULT_WIDTHS[c.k] = c.w; });
+// Metric columns
+['gmv','orders','listing','failed'].forEach(mk => {
+  COL_DEFAULT_WIDTHS[mk+'_tot'] = mk==='gmv' ? 130 : 130;
+  ['Q1','Q2','Q3','Q4'].forEach(q => { COL_DEFAULT_WIDTHS[mk+'_'+q] = 100; });
+  ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach(m => {
+    COL_DEFAULT_WIDTHS[mk+'_'+m] = mk==='gmv' ? 110 : 85;
+  });
+});
+
+let colWidths = JSON.parse(localStorage.getItem('colWidths26') || 'null') || {...COL_DEFAULT_WIDTHS};
+
+function saveColWidths() { localStorage.setItem('colWidths26', JSON.stringify(colWidths)); }
+
+function getColW(key) { return colWidths[key] ?? COL_DEFAULT_WIDTHS[key] ?? 100; }
+
+// Auto-fit: measure longest cell content for a given col key
+function autoFitCol(colKey) {
+  const MIN_W = 40, MAX_W = 400;
+  // Use a temp canvas for text measurement
+  if (!autoFitCol._canvas) { autoFitCol._canvas = document.createElement('canvas'); }
+  const ctx = autoFitCol._canvas.getContext('2d');
+  ctx.font = '12px "Noto Sans Thai","Noto Sans",sans-serif';
+
+  const data = getData();
+  let maxW = 0;
+
+  // Measure header label
+  const colMeta = ALL_COLS_META.find(c => c.k === colKey);
+  const headerLabel = colMeta ? colMeta.label : colKey.split('_').pop();
+  maxW = Math.max(maxW, ctx.measureText(headerLabel).width + 60); // +60 for icons
+
+  // Measure cell values
+  if (colMeta) {
+    data.forEach(r => {
+      const val = (r[colKey] || '').toString();
+      if (val) maxW = Math.max(maxW, ctx.measureText(val).width + 24);
+    });
+  } else {
+    // metric col: measure formatted numbers
+    const parts = colKey.split('_'); // e.g. 'gmv_Q1' or 'gmv_Jan' or 'gmv_tot'
+    const mk = parts[0];
+    const period = parts.slice(1).join('_');
+    data.forEach(r => {
+      let val = 0;
+      if (period === 'tot') {
+        val = Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
+      } else if (['Q1','Q2','Q3','Q4'].includes(period)) {
+        const qm = {Q1:['Jan','Feb','Mar'],Q2:['Apr','May','Jun'],Q3:['Jul','Aug','Sep'],Q4:['Oct','Nov','Dec']}[period];
+        val = qm.reduce((a,m)=>a+((r[mk]||{})[m]||0),0);
+      } else {
+        val = (r[mk]||{})[period]||0;
+      }
+      if (val) {
+        const str = (+val).toLocaleString('th-TH');
+        maxW = Math.max(maxW, ctx.measureText(str).width + 24);
+      }
+    });
+  }
+
+  colWidths[colKey] = Math.min(MAX_W, Math.max(MIN_W, Math.ceil(maxW)));
+  saveColWidths();
+  render();
+}
+
+// ── Drag-to-resize ──
+let _resizeDrag = null;
+
+function startColResize(e, colKey, handle) {
+  e.stopPropagation();
+  e.preventDefault();
+  const startX = e.clientX;
+  const startW = getColW(colKey);
+  _resizeDrag = { colKey, startX, startW, handle };
+  handle.classList.add('dragging');
+  document.body.classList.add('col-resizing');
+
+  function onMove(ev) {
+    if (!_resizeDrag) return;
+    const dx = ev.clientX - _resizeDrag.startX;
+    const newW = Math.max(40, _resizeDrag.startW + dx);
+    colWidths[_resizeDrag.colKey] = Math.round(newW);
+    // Live-update ALL cells (header + body) for this col
+    document.querySelectorAll(`[data-col="${_resizeDrag.colKey}"]`).forEach(el => {
+      el.style.width = newW + 'px';
+      el.style.minWidth = newW + 'px';
+    });
+    // If frozen col changed, update frozen row widths too
+    const FROZEN = getFrozen();
+    const newFrozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
+    document.querySelectorAll('.tbl-frozen, .tbl-head-frozen, [id="frozenBody"] .row, [id="frozenHead"]').forEach(el => {
+      if (el.classList.contains('row')) el.style.width = newFrozenW + 'px';
+    });
+  }
+
+  function onUp() {
+    if (_resizeDrag) {
+      saveColWidths();
+      render(); // full re-render to sync frozen/scroll
+    }
+    _resizeDrag = null;
+    handle.classList.remove('dragging');
+    document.body.classList.remove('col-resizing');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// Build resize handle HTML for a column key
+function resizeHandle(colKey) {
+  return `<span class="col-resize-handle" 
+    onmousedown="startColResize(event,'${colKey}',this)"
+    ondblclick="event.stopPropagation();autoFitCol('${colKey}')"
+    title="Drag to resize · Double-click to auto-fit"></span>`;
+}
+
 // ── Build metric section header (sortable + range filterable) ──
 function makeMetricHC(s) {
+  const w       = getColW(s.key + '_tot');
   const isSort    = sortKey === s.sortKey;
   const hasFilter = !!activeRangeFilters[s.filterKey];
   const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
   const sortArrow = isSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
 
-  return `<div class="hc ${s.cls}" style="width:130px;min-width:130px;padding:0 6px">
+  return `<div class="hc ${s.cls}" style="width:${w}px;min-width:${w}px;padding:0 6px" data-col="${s.key}_tot">
     <div class="hc-inner">
       <span class="hc-label" style="display:flex;flex-direction:column;gap:1px">
         <span style="${isSort?'font-weight:700':''}">${s.label}</span>
@@ -1525,11 +1673,13 @@ function makeMetricHC(s) {
         </button>
       </span>
     </div>
+    ${resizeHandle(s.key + '_tot')}
   </div>`;
 }
 
 /* ── render ── */
 function makeHC(c, w) {
+  const cw = getColW(c.k);  // use stored width
   const isSort    = sortKey === c.k;
   const hasFilter = activeFilters[c.k] && activeFilters[c.k].size > 0;
   const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
@@ -1541,7 +1691,7 @@ function makeHC(c, w) {
   const isFilterable = !!filterCols[c.k];
   const labelStyle = isSort ? 'font-weight:700;color:var(--ink)' : '';
 
-  let html = `<div class="hc" style="width:${w}px;min-width:${w}px;padding:0 6px" title="${c.label}">
+  let html = `<div class="hc" style="width:${cw}px;min-width:${cw}px;padding:0 6px" title="${c.label}" data-col="${c.k}">
     <div class="hc-inner">
       <span class="hc-label" style="${labelStyle}">${c.label}</span>
       <span class="hc-icons">
@@ -1554,7 +1704,7 @@ function makeHC(c, w) {
   if (c.type === 'dyn') {
     html += `<button class="hc-filter-btn" onclick="openMgrPanel('${c.dynKey}',event)" title="Manage list" style="font-size:10px">⚙</button>`;
   }
-  html += `</span></div></div>`;
+  html += `</span></div>${resizeHandle(c.k)}</div>`;
   return html;
 }
 
@@ -1665,12 +1815,13 @@ function render() {
   document.getElementById('sb-ocnt').textContent = oData.length;
 
   const FROZEN = getFrozen();
-  const frozenW = FROZEN.reduce((a,c)=>a+c.w,0);
+  const frozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
 
   document.getElementById('frozenHead').innerHTML =
     FROZEN.map(c => {
-      if(c.special) return `<div class="hc" style="width:${c.w}px;min-width:${c.w}px"></div>`;
-      return makeHC(c, c.w);
+      const cw = getColW(c.k);
+      if(c.special) return `<div class="hc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">${resizeHandle(c.k)}</div>`;
+      return makeHC(c, cw);
     }).join('');
   document.getElementById('frozenHead').style.width = frozenW + 'px';
 
@@ -1679,12 +1830,14 @@ function render() {
   MONTHLY_SECS.forEach(s => {
     sh += makeMetricHC(s);
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
+      const qColKey    = s.key + '_' + qLabel;
+      const qW         = getColW(qColKey);
       const qSortKey   = `_${s.key}_${qLabel}`;
       const isQSort    = sortKey === qSortKey;
       const qSortCls   = isQSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
       const qArrow     = isQSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
       const qHasFilter = !!activeRangeFilters[qSortKey];
-      sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px">
+      sh += `<div class="hc ${s.cls} q-hdr" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px" data-col="${qColKey}">
         <div class="hc-inner">
           <span class="hc-label">${qLabel}</span>
           <span class="hc-icons">
@@ -1694,14 +1847,17 @@ function render() {
             </button>
           </span>
         </div>
+        ${resizeHandle(qColKey)}
       </div>`;
       qMonths.forEach(m => {
+        const mColKey    = s.key + '_' + m;
+        const mW         = getColW(mColKey);
         const mSortKey   = `_${s.key}_${m}`;
         const isMSort    = sortKey === mSortKey;
         const mSortCls   = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
         const mArrow     = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
         const mHasFilter = !!activeRangeFilters[mSortKey];
-        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px;padding:0 2px">
+        sh += `<div class="hc" style="width:${mW}px;min-width:${mW}px;padding:0 2px" data-col="${mColKey}">
           <div class="hc-inner">
             <span class="hc-label">${m}</span>
             <span class="hc-icons">
@@ -1711,6 +1867,7 @@ function render() {
               </button>
             </span>
           </div>
+          ${resizeHandle(mColKey)}
         </div>`;
       });
     });
@@ -1736,7 +1893,8 @@ function render() {
     /* frozen row */
     let frow = `<div class="row ${cls}" data-id="${r._id}" style="width:${frozenW}px">`;
     FROZEN.forEach(c => {
-      frow += `<div class="fc" style="width:${c.w}px;min-width:${c.w}px">`;
+      const cw = getColW(c.k);
+      frow += `<div class="fc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">`;
       if(c.special==='actions') {
         frow += `<div class="row-acts">`;
         if(isE) {
@@ -1776,7 +1934,8 @@ function render() {
     /* scroll row */
     let srow = `<div class="row ${cls}" data-id="${r._id}" style="display:flex;align-items:stretch">`;
     infoCols.forEach(c => {
-      srow += `<div class="sc" style="width:${c.w}px;min-width:${c.w}px">`;
+      const cw = getColW(c.k);
+      srow += `<div class="sc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">`;
       const val = (r[c.k]||'').toString();
       if(isE) {
         if(c.type==='sel') {
@@ -1805,17 +1964,22 @@ function render() {
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
       const qTotals = calcQ(r, s.key);
+      const totW = getColW(s.key+'_tot');
 
-      srow += `<div class="sc tot-cell" style="width:130px;min-width:130px">
+      srow += `<div class="sc tot-cell" style="width:${totW}px;min-width:${totW}px" data-col="${s.key}_tot">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling?'…':(tot?fmt(tot):'—')}</span></div>`;
 
       Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
-        const qVal = qTotals[qLabel] || 0;
-        srow += `<div class="sc tot-cell" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.08)">
+        const qVal  = qTotals[qLabel] || 0;
+        const qCKey = s.key + '_' + qLabel;
+        const qW    = getColW(qCKey);
+        srow += `<div class="sc tot-cell" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.08)" data-col="${qCKey}">
           <span class="c-val mono ${qVal?'':'dim'}">${isPulling?'…':(qVal?fmt(qVal):'—')}</span></div>`;
         qMonths.forEach(m => {
-          const v=(r[s.key]||{})[m]||0;
-          srow += `<div class="sc" style="width:${s.mw}px;min-width:${s.mw}px">`;
+          const v    = (r[s.key]||{})[m]||0;
+          const mCKey = s.key + '_' + m;
+          const mW   = getColW(mCKey);
+          srow += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
           srow += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
           srow += `</div>`;
         });
@@ -2077,6 +2241,11 @@ function doClearAll() {
   vData=[]; oData=[];
   document.getElementById('clearModal').classList.remove('open');
   render(); toast('Cleared all local data','ok');
+}
+function resetColWidths() {
+  Object.assign(colWidths, COL_DEFAULT_WIDTHS);
+  saveColWidths(); render(); toast('Column widths reset','ok');
+  closeSidebar();
 }
 function toast(msg, type) {
   const el = document.getElementById('toast');
