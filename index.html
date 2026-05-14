@@ -957,6 +957,10 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><line x1="4" y1="4" x2="20" y2="20"/></svg></span>
       Reset col widths
     </button>
+    <button class="sb-item" onclick="dedupeCurrentTab()" style="color:#888;margin-top:2px">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
+      Remove duplicate emails
+    </button>
     <button class="sb-item sb-mobile-only" id="mobileFrzBtn" onclick="closeSidebar();openFrzPanelMobile()">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg></span>
       Freeze columns
@@ -2237,26 +2241,46 @@ async function pullPerfData(specificIds) {
   const data = getData();
   const targets = specificIds ? data.filter(r => specificIds.includes(r._id)) : data.filter(r => r.email);
   if (!targets.length) return;
+
+  // dedupe emails for fetching
   const emails = [...new Set(targets.map(r => r.email).filter(Boolean))];
   if (!emails.length) return;
+
   targets.forEach(r => r._pulling = true);
   document.getElementById('rawStatus').textContent = 'กำลังดึงข้อมูล…';
   render();
+
   try {
-    const res = await fetch(url + '?action=getPerf&emails=' + encodeURIComponent(emails.join(',')));
-    const j = await res.json();
-    if (j.status === 'success' && j.data) {
-      data.forEach(r => {
-        if (!r.email) return;
-        const perf = j.data[r.email];
-        if (!perf) return;
-        r.gmv=perf.gmv||{}; r.orders=perf.orders||{}; r.listing=perf.listing||{}; r.failed=perf.failed||{};
-        delete r._pulling;
-      });
-      persist(); render();
-      document.getElementById('rawStatus').textContent = '✓ pulled ' + new Date().toLocaleTimeString('th-TH');
-    } else { targets.forEach(r => delete r._pulling); render(); }
-  } catch { targets.forEach(r => delete r._pulling); render(); toast('Pull perf failed','err'); }
+    // Split into batches of 20 to avoid URL length limits
+    const BATCH = 20;
+    const allPerf = {};
+    for (let i = 0; i < emails.length; i += BATCH) {
+      const batch = emails.slice(i, i + BATCH);
+      const res = await fetch(url + '?action=getPerf&emails=' + encodeURIComponent(batch.join(',')));
+      const j   = await res.json();
+      if (j.status === 'success' && j.data) {
+        Object.assign(allPerf, j.data);
+      }
+      document.getElementById('rawStatus').textContent =
+        `ดึงข้อมูล ${Math.min(i+BATCH, emails.length)}/${emails.length}…`;
+    }
+
+    data.forEach(r => {
+      if (!r.email) return;
+      const perf = allPerf[r.email];
+      if (!perf) return;
+      r.gmv=perf.gmv||{}; r.orders=perf.orders||{}; r.listing=perf.listing||{}; r.failed=perf.failed||{};
+      delete r._pulling;
+    });
+    // clear any remaining _pulling flags
+    targets.forEach(r => delete r._pulling);
+    persist(); render();
+    document.getElementById('rawStatus').textContent = '✓ pulled ' + new Date().toLocaleTimeString('th-TH');
+  } catch(err) {
+    targets.forEach(r => delete r._pulling);
+    render();
+    toast('Pull perf failed: ' + err.message, 'err');
+  }
 }
 
 function exportCSV() {
@@ -2400,6 +2424,28 @@ function doClearAll() {
 function resetColWidths() {
   Object.assign(colWidths, COL_DEFAULT_WIDTHS);
   saveColWidths(); render(); toast('Column widths reset','ok');
+  closeSidebar();
+}
+
+function dedupeCurrentTab() {
+  if (!canEdit) { showLock(); return; }
+  const data = getData();
+  const seen = new Set();
+  const before = data.length;
+  const deduped = data.filter(r => {
+    const key = (r.email || r._id || '').toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const removed = before - deduped.length;
+  if (removed === 0) { toast('ไม่มี email ซ้ำ', 'ok'); closeSidebar(); return; }
+  if (!confirm(`พบ ${removed} row ที่ email ซ้ำ จะลบออกใช่ไหม? (เก็บแค่ row แรกของแต่ละ email)`)) return;
+  if (tab === 'vendor')       vData  = deduped;
+  else if (tab === 'onboard') oData  = deduped;
+  else                        xbData = deduped;
+  persist(); render(); syncSheet(true);
+  toast(`ลบ ${removed} duplicate rows แล้ว`, 'ok');
   closeSidebar();
 }
 function toast(msg, type) {
