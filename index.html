@@ -886,15 +886,20 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
     </div>
   </div>
   <div class="sb-section">Vendor</div>
-  <button class="sb-item active" onclick="switchTab('vendor',this)">
+  <button class="sb-item active" id="sb-vendor" onclick="switchTab('vendor',this)">
     <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-    Vendor perf 2026
+    Vendor perf
     <span class="sb-count" id="sb-vcnt">0</span>
   </button>
-  <button class="sb-item" onclick="switchTab('onboard',this)">
+  <button class="sb-item" id="sb-onboard" onclick="switchTab('onboard',this)">
     <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
-    VA Onboard 2026
+    VA Onboard
     <span class="sb-count" id="sb-ocnt">0</span>
+  </button>
+  <button class="sb-item" id="sb-offboard" onclick="switchTab('offboard',this)">
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="12" x2="13" y2="12"/></svg></span>
+    Vendor Offboard
+    <span class="sb-count" id="sb-xbcnt">0</span>
   </button>
   <div class="sb-section" style="margin-top:8px">Data</div>
   <button class="sb-item" onclick="pullPerfData()">
@@ -911,11 +916,23 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
   </button>
   <div style="flex:1"></div>
   <div style="padding:12px 14px 14px;border-top:1px solid #2a2520">
-    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit" target="_blank"
-      style="display:flex;align-items:center;gap:8px;font-size:11px;color:#555;text-decoration:none;padding:6px 4px;transition:color .15s"
+    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit#gid=0" target="_blank"
+      style="display:flex;align-items:center;gap:8px;font-size:11px;color:#555;text-decoration:none;padding:5px 4px;transition:color .15s"
       onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-      KAM Vendor Master 2026
+      VendorPerf2026
+    </a>
+    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit#gid=1" target="_blank"
+      style="display:flex;align-items:center;gap:8px;font-size:11px;color:#555;text-decoration:none;padding:5px 4px;transition:color .15s"
+      onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      VAOnboard2026
+    </a>
+    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit?gid=64004414#gid=64004414" target="_blank"
+      style="display:flex;align-items:center;gap:8px;font-size:11px;color:#aaa;text-decoration:none;padding:5px 4px;transition:color .15s"
+      onmouseover="this.style.color='#ddd'" onmouseout="this.style.color='#aaa'">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      VendorOffboard2026 ↗
     </a>
     <button class="sb-item" onclick="confirmClearAll()" style="color:#e57373;margin-top:4px">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></span>
@@ -943,7 +960,7 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div>
-      <div class="topbar-title" id="pageTitle">Vendor perf 2026</div>
+      <div class="topbar-title" id="pageTitle">Vendor perf</div>
       <div class="topbar-meta" id="pageMeta">Spreadsheet · data saved locally</div>
     </div>
     <div class="topbar-r">
@@ -973,8 +990,9 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
 
   <div class="filterbar">
     <div class="tab-strip">
-      <button class="ftab on" onclick="switchTab('vendor',this)" id="ftab-vendor">Vendor perf 2026</button>
-      <button class="ftab" onclick="switchTab('onboard',this)" id="ftab-onboard">VA Onboard 2026</button>
+      <button class="ftab on" onclick="switchTab('vendor',this)" id="ftab-vendor">Vendor perf</button>
+      <button class="ftab" onclick="switchTab('onboard',this)" id="ftab-onboard">VA Onboard</button>
+      <button class="ftab" onclick="switchTab('offboard',this)" id="ftab-offboard">Vendor Offboard</button>
     </div>
     <div class="filter-r">
       <div class="search-wrap">
@@ -1333,16 +1351,16 @@ function passesRangeFilters(r) {
 
 let canEdit = false;
 let tab = 'vendor';
-let vData = [], oData = [];
+let vData = [], oData = [], xbData = [];
 let editing = null;
 const _pendingDel = { id: null, tab: null };
 
-const getData = () => tab === 'vendor' ? vData : oData;
+const getData = () => tab === 'vendor' ? vData : tab === 'onboard' ? oData : xbData;
 
 function getInfoCols() {
   const frozenKeys = new Set(getFrozen().map(c => c.k));
   const scrollCols = getColOrder().filter(c => !frozenKeys.has(c.k));
-  if (tab === 'onboard') return [ONBOARD_MONTH, ...scrollCols.filter(c => c.k !== 'month')];
+  if (tab === 'onboard' || tab === 'offboard') return [ONBOARD_MONTH, ...scrollCols.filter(c => c.k !== 'month')];
   return scrollCols;
 }
 
@@ -1385,8 +1403,9 @@ function load() {
   if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
   loadDynOpts();
   const filterEmpty = rows => rows.filter(r => r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no);
-  vData = filterEmpty(JSON.parse(localStorage.getItem('vp26') || '[]'));
-  oData = filterEmpty(JSON.parse(localStorage.getItem('vo26') || '[]'));
+  vData  = filterEmpty(JSON.parse(localStorage.getItem('vp26')  || '[]'));
+  oData  = filterEmpty(JSON.parse(localStorage.getItem('vo26')  || '[]'));
+  xbData = filterEmpty(JSON.parse(localStorage.getItem('xb26')  || '[]'));
 }
 
 async function loadFromSheet(skipIfEditing) {
@@ -1399,16 +1418,17 @@ async function loadFromSheet(skipIfEditing) {
     const j   = await res.json();
     if (j.status === 'success') {
       const filterEmpty = rows => (rows||[]).filter(r => r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no);
-      const newV = filterEmpty(j.vendor  || []);
-      const newO = filterEmpty(j.onboard || []);
+      const newV  = filterEmpty(j.vendor   || []);
+      const newO  = filterEmpty(j.onboard  || []);
+      const newXB = filterEmpty(j.offboard || []);
       const changed =
-        JSON.stringify(newV.map(r=>r._id+r.status+r.shop)) !==
-        JSON.stringify(vData.map(r=>r._id+r.status+r.shop)) ||
-        JSON.stringify(newO.map(r=>r._id+r.status+r.shop)) !==
-        JSON.stringify(oData.map(r=>r._id+r.status+r.shop));
-      vData = newV; oData = newO;
+        JSON.stringify(newV.map(r=>r._id+r.status+r.shop))  !== JSON.stringify(vData.map(r=>r._id+r.status+r.shop)) ||
+        JSON.stringify(newO.map(r=>r._id+r.status+r.shop))  !== JSON.stringify(oData.map(r=>r._id+r.status+r.shop)) ||
+        JSON.stringify(newXB.map(r=>r._id+r.status+r.shop)) !== JSON.stringify(xbData.map(r=>r._id+r.status+r.shop));
+      vData = newV; oData = newO; xbData = newXB;
       localStorage.setItem('vp26', JSON.stringify(vData));
       localStorage.setItem('vo26', JSON.stringify(oData));
+      localStorage.setItem('xb26', JSON.stringify(xbData));
       if (changed) render();
       document.getElementById('rawStatus').textContent = '● live · ' + new Date().toLocaleTimeString('th-TH');
       document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
@@ -1438,7 +1458,11 @@ function updateRealtimeBadge(on) {
   const dot = btn.querySelector('.rt-dot');
   if (dot) dot.style.animation = on ? 'rtpulse 1.5s ease-in-out infinite' : 'none';
 }
-function persist() { localStorage.setItem('vp26', JSON.stringify(vData)); localStorage.setItem('vo26', JSON.stringify(oData)); }
+function persist() {
+  localStorage.setItem('vp26', JSON.stringify(vData));
+  localStorage.setItem('vo26', JSON.stringify(oData));
+  localStorage.setItem('xb26', JSON.stringify(xbData));
+}
 function saveUrl() { localStorage.setItem('surl26', document.getElementById('scriptUrl').value.trim()); localStorage.setItem('srawurl26', document.getElementById('rawUrl').value.trim()); }
 
 function uid() {
@@ -1446,14 +1470,14 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8) + Math.random().toString(36).slice(2,8);
 }
 function blank() {
-  const len = tab === 'vendor' ? vData.length : oData.length;
+  const len = tab === 'vendor' ? vData.length : tab === 'onboard' ? oData.length : xbData.length;
   return { _id:uid(), no:String(len+1), shop:'', email:'', user_id:'', name_th:'', name_en:'', kam:'', month:'', tier:'', status:'', size:'', group:'', category:'', seller_type:'TH', brand:'', supply:'', shipping:'', line_group:'', remark:'', gmv:{}, orders:{}, listing:{}, failed:{} };
 }
 
 /* ── crud ── */
 function addRow() {
   const r = blank(); r._new = true;
-  if (tab==='vendor') vData.push(r); else oData.push(r);
+  if (tab==='vendor') vData.push(r); else if (tab==='onboard') oData.push(r); else xbData.push(r);
   editing = r._id; persist(); render();
   setTimeout(() => { const el = document.querySelector('.row.is-new .c-in'); if(el) el.focus(); }, 50);
 }
@@ -1472,7 +1496,7 @@ function cancelEdit(id) {
   const d = getData(); const i = d.findIndex(x=>x._id===id);
   if (i>=0 && d[i]._new) {
     d.splice(i,1);
-    if(tab==='vendor') vData=d; else oData=d;
+    if(tab==='vendor') vData=d; else if(tab==='onboard') oData=d; else xbData=d;
     persist();
   }
   editing=null; render(); startRealtime();
@@ -1483,10 +1507,11 @@ function setF(id, k, v) {
 }
 function askDel(id) {
   if(!canEdit) { showLock(); return; }
-  const inVendor = vData.find(x=>x._id===id);
+  const inVendor  = vData.find(x=>x._id===id);
   const inOnboard = oData.find(x=>x._id===id);
-  const rowTab = inVendor ? 'vendor' : (inOnboard ? 'onboard' : tab);
-  const r = inVendor || inOnboard;
+  const inOffboard= xbData.find(x=>x._id===id);
+  const rowTab = inVendor ? 'vendor' : inOnboard ? 'onboard' : inOffboard ? 'offboard' : tab;
+  const r = inVendor || inOnboard || inOffboard;
   _pendingDel.id = id; _pendingDel.tab = rowTab;
   document.getElementById('delName').textContent = (r && (r.shop || r.email)) || 'this seller';
   document.getElementById('delModal').classList.add('open');
@@ -1500,18 +1525,20 @@ function confirmDel() {
   if (!idToDelete) return;
   document.getElementById('delModal').classList.remove('open');
   _pendingDel.id = null; _pendingDel.tab = null;
-  if (tabToDelete === 'vendor') vData = vData.filter(x => x._id !== idToDelete);
-  else oData = oData.filter(x => x._id !== idToDelete);
+  if (tabToDelete === 'vendor')   vData  = vData.filter(x => x._id !== idToDelete);
+  else if (tabToDelete === 'onboard') oData = oData.filter(x => x._id !== idToDelete);
+  else xbData = xbData.filter(x => x._id !== idToDelete);
   persist(); render(); syncSheet(true); toast('Removed');
 }
 function switchTab(name, el) {
   tab=name; editing=null;
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-  const sbBtn = name==='vendor' ? document.querySelector('.sb-item:nth-child(2)') : document.querySelector('.sb-item:nth-child(3)');
+  const sbMap = {vendor:'sb-vendor', onboard:'sb-onboard', offboard:'sb-offboard'};
+  const sbBtn = document.getElementById(sbMap[name]);
   if(sbBtn) sbBtn.classList.add('active');
   document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
   document.getElementById('ftab-'+name).classList.add('on');
-  const titles = {vendor:'Vendor perf 2026', onboard:'VA Onboard 2026'};
+  const titles = {vendor:'Vendor perf', onboard:'VA Onboard', offboard:'Vendor Offboard'};
   document.getElementById('pageTitle').textContent = titles[name];
   render(); autoPull();
 }
@@ -1819,8 +1846,9 @@ function render() {
   }
 
   document.getElementById('rowCount').textContent = filtered.length + ' sellers';
-  document.getElementById('sb-vcnt').textContent = vData.length;
-  document.getElementById('sb-ocnt').textContent = oData.length;
+  document.getElementById('sb-vcnt').textContent  = vData.length;
+  document.getElementById('sb-ocnt').textContent  = oData.length;
+  document.getElementById('sb-xbcnt').textContent = xbData.length;
 
   const FROZEN = getFrozen();
   const frozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
@@ -2077,12 +2105,13 @@ let _lastSyncHash = '';
 async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) return;
-  const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id));
+  const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(xbData.length)+
+               JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id))+JSON.stringify(xbData.map(r=>r._id));
   if (!force && hash === _lastSyncHash) return;
   _lastSyncHash = hash;
   toast('Syncing…');
   try {
-    const res = await fetch(url, { method:'POST', body:JSON.stringify({action:'syncAll',vendor:vData,onboard:oData}), headers:{'Content-Type':'text/plain'} });
+    const res = await fetch(url, { method:'POST', body:JSON.stringify({action:'syncAll',vendor:vData,onboard:oData,offboard:xbData}), headers:{'Content-Type':'text/plain'} });
     const j = await res.json();
     if(j.status==='success') { document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH'); toast('Synced to Google Sheet','ok'); }
     else toast('Sync error','err');
@@ -2261,8 +2290,8 @@ function loadDynOpts() {
 }
 function confirmClearAll() { document.getElementById('clearModal').classList.add('open'); }
 function doClearAll() {
-  localStorage.removeItem('vp26'); localStorage.removeItem('vo26'); localStorage.removeItem('sraw26');
-  vData=[]; oData=[];
+  localStorage.removeItem('vp26'); localStorage.removeItem('vo26'); localStorage.removeItem('xb26'); localStorage.removeItem('sraw26');
+  vData=[]; oData=[]; xbData=[];
   document.getElementById('clearModal').classList.remove('open');
   render(); toast('Cleared all local data','ok');
 }
@@ -2301,8 +2330,9 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarBackdrop').classList.remove('show');
 }
-const _origSwitchTab = switchTab;
-function switchTab(name, el) { _origSwitchTab(name, el); closeSidebar(); }
+// On mobile, switchTab also closes sidebar — patch onto the existing function
+const _switchTabOrig = switchTab;
+window.switchTab = function(name, el) { _switchTabOrig(name, el); closeSidebar(); };
 function openFrzPanelMobile() {
   renderFrzPanel();
   document.getElementById('frzPanel').classList.add('open');
