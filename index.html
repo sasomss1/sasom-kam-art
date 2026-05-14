@@ -401,6 +401,21 @@ select.c-in {
 /* row actions */
 .row-acts { display: flex; gap: 2px; opacity: 0; transition: opacity .1s; }
 .row:hover .row-acts, .row.editing .row-acts { opacity: 1; }
+
+/* drag-to-reorder handle */
+.drag-handle {
+  width: 14px; height: 100%; min-height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab; color: var(--ink4); flex-shrink: 0;
+  opacity: 0; transition: opacity .12s;
+  touch-action: none; padding: 0 2px;
+}
+.drag-handle:active { cursor: grabbing; }
+.row:hover .drag-handle { opacity: 1; }
+.row.dragging-src { opacity: .35; background: var(--amber-bg) !important; }
+.row.drag-above { box-shadow: inset 0 2px 0 var(--amber) !important; }
+.row.drag-below { box-shadow: inset 0 -2px 0 var(--amber) !important; }
+body.row-dragging * { cursor: grabbing !important; user-select: none !important; }
 .ia {
   width: 26px; height: 26px;
   border: none; background: none; cursor: pointer;
@@ -1962,6 +1977,7 @@ function render() {
       const isLast = c.k === lastFrozenKey;
       rows += `<div class="fc" style="width:${cw}px;min-width:${cw}px;left:${lft}px${isLast?';border-right:1.5px solid var(--border2)':''}" data-col="${c.k}">`;
       if(c.special==='actions') {
+        rows += `<div class="drag-handle" onmousedown="startRowDrag(event,'${r._id}')" title="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14" fill="none"><circle cx="3" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="3" cy="11.5" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg></div>`;
         rows += `<div class="row-acts">`;
         if(isE) {
           rows += `<button class="ia sv" onclick="saveRow('${r._id}')" title="Save"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>`;
@@ -2065,6 +2081,92 @@ function render() {
 function syncScroll(el) {
   document.getElementById('scrollHead').scrollLeft  = el.scrollLeft;
   document.getElementById('scrollHead2').scrollLeft = el.scrollLeft;
+}
+
+/* ── Row drag-to-reorder ── */
+let _rowDrag = null;
+
+function startRowDrag(e, id) {
+  if (!canEdit) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const srcEl = document.querySelector(`.row[data-id="${id}"]`);
+  if (!srcEl) return;
+
+  _rowDrag = { id, srcEl, overEl: null, pos: null };
+  srcEl.classList.add('dragging-src');
+  document.body.classList.add('row-dragging');
+
+  function getRowAt(y) {
+    const rows = [...document.querySelectorAll('#bodyInner .row[data-id]')];
+    for (const row of rows) {
+      if (row === srcEl) continue;
+      const rect = row.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        const mid = rect.top + rect.height / 2;
+        return { el: row, pos: y < mid ? 'above' : 'below' };
+      }
+    }
+    return null;
+  }
+
+  function clearIndicators() {
+    document.querySelectorAll('.row.drag-above, .row.drag-below').forEach(r => {
+      r.classList.remove('drag-above', 'drag-below');
+    });
+  }
+
+  function onMove(ev) {
+    if (!_rowDrag) return;
+    clearIndicators();
+    const hit = getRowAt(ev.clientY);
+    if (hit) {
+      hit.el.classList.add(hit.pos === 'above' ? 'drag-above' : 'drag-below');
+      _rowDrag.overEl = hit.el;
+      _rowDrag.pos    = hit.pos;
+    } else {
+      _rowDrag.overEl = null;
+      _rowDrag.pos    = null;
+    }
+  }
+
+  function onUp() {
+    clearIndicators();
+    srcEl.classList.remove('dragging-src');
+    document.body.classList.remove('row-dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+
+    if (_rowDrag && _rowDrag.overEl && _rowDrag.pos) {
+      const targetId = _rowDrag.overEl.dataset.id;
+      reorderRow(id, targetId, _rowDrag.pos);
+    }
+    _rowDrag = null;
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function reorderRow(srcId, targetId, pos) {
+  const data = getData();
+  const srcIdx = data.findIndex(r => r._id === srcId);
+  const tgtIdx = data.findIndex(r => r._id === targetId);
+  if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
+
+  const [moved] = data.splice(srcIdx, 1);
+  const newTgtIdx = data.findIndex(r => r._id === targetId);
+  const insertAt = pos === 'above' ? newTgtIdx : newTgtIdx + 1;
+  data.splice(insertAt, 0, moved);
+
+  // Write back to correct array
+  if (tab === 'vendor')        vData  = data;
+  else if (tab === 'onboard')  oData  = data;
+  else                         xbData = data;
+
+  persist();
+  render();
 }
 
 function handleCellInput(e) {
