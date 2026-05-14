@@ -1600,9 +1600,20 @@ function autoFitCol(colKey) {
 
 // ── Drag-to-resize ──
 let _resizeDrag = null;
+let _resizeLastClick = { key: null, time: 0 };
 
 function startColResize(e, colKey, handle) {
   e.stopPropagation();
+
+  // Detect double-click manually (within 400ms on same col)
+  const now = Date.now();
+  if (_resizeLastClick.key === colKey && now - _resizeLastClick.time < 400) {
+    _resizeLastClick = { key: null, time: 0 };
+    autoFitCol(colKey);
+    return;
+  }
+  _resizeLastClick = { key: colKey, time: now };
+
   e.preventDefault();
   const startX = e.clientX;
   const startW = getColW(colKey);
@@ -1648,7 +1659,6 @@ function startColResize(e, colKey, handle) {
 function resizeHandle(colKey) {
   return `<span class="col-resize-handle" 
     onmousedown="startColResize(event,'${colKey}',this)"
-    ondblclick="event.stopPropagation();autoFitCol('${colKey}')"
     title="Drag to resize · Double-click to auto-fit"></span>`;
 }
 
