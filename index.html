@@ -748,6 +748,12 @@ select.c-in {
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       KAM Vendor Master 2026
     </a>
+    <button class="sb-item" onclick="confirmClearAll()" style="color:#e57373;margin-top:4px">
+      <span class="sb-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </span>
+      Clear all data
+    </button>
   </div>
 </div>
 
@@ -853,6 +859,22 @@ select.c-in {
   </div>
 </div>
 
+<!-- CLEAR ALL MODAL -->
+<div class="modal-bg" id="clearModal">
+  <div class="modal">
+    <div class="modal-t">⚠️ Clear all data?</div>
+    <div class="modal-b">
+      จะลบข้อมูล seller ทั้งหมดออกจาก browser นี้<br>
+      <strong>ข้อมูลใน Google Sheet จะไม่ถูกลบ</strong><br><br>
+      ถ้าต้องการ reload ข้อมูลจาก Sheet ให้กด Sync หลัง clear
+    </div>
+    <div class="modal-a">
+      <button class="btn btn-ghost" onclick="document.getElementById('clearModal').classList.remove('open')">Cancel</button>
+      <button class="btn" style="background:#e53935;color:#fff" onclick="doClearAll()">Clear all</button>
+    </div>
+  </div>
+</div>
+
 <!-- DELETE MODAL -->
 <div class="modal-bg" id="delModal">
   <div class="modal">
@@ -860,7 +882,7 @@ select.c-in {
     <div class="modal-b">Remove <strong id="delName"></strong>?<br>This action cannot be undone.</div>
     <div class="modal-a">
       <button class="btn btn-ghost" onclick="closeMdl()">Cancel</button>
-      <button class="btn btn-dark" onclick="confirmDel()">Remove</button>
+      <button class="btn btn-dark" id="confirmDelBtn" onclick="confirmDel()">Remove</button>
     </div>
   </div>
 </div>
@@ -895,9 +917,6 @@ select.c-in {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PWD    = 'SASOMART';
 
-/* ── frozen cols (always visible) ── */
-/* ── dynamic lists for group & category ── */
-/* ── dynamic option lists (all editable) ── */
 const DYN_DEFAULTS = {
   kam:         ['First','Faii','Remote'],
   tier:        ['tier 1','tier 2','tier 3','tier 4'],
@@ -912,7 +931,6 @@ const DYN_DEFAULTS = {
   shop:        [],
 };
 
-// Load all from localStorage or use defaults
 const dynOpts = {};
 Object.keys(DYN_DEFAULTS).forEach(k => {
   dynOpts[k] = JSON.parse(localStorage.getItem('dyn26_' + k) || JSON.stringify(DYN_DEFAULTS[k]));
@@ -922,22 +940,19 @@ function saveDyn(key) {
   localStorage.setItem('dyn26_' + key, JSON.stringify(dynOpts[key]));
 }
 
-// Legacy compat shims
 const getKam  = () => dynOpts.kam;
 const getGroup= () => dynOpts.group;
 const getCat  = () => dynOpts.category;
 
-/* ── freeze config ── */
-let freezeRows = 1; // always freeze header row (visual only - for future row freeze)
-// ── ALL columns master list (actions + no always frozen) ──
+let freezeRows = 1;
 const ALL_COLS_META = [
   { k:'_act',        label:'Actions',           w:62,  special:'actions',  alwaysPin:true },
   { k:'no',          label:'#',                 w:36,  alwaysPin:true },
   { k:'kam',         label:'KAM',               w:85,  type:'dyn', dynKey:'kam' },
-  { k:'email',       label:'Email',             w:160 },                              // free text
-  { k:'user_id',     label:'User ID (Asker)',   w:130 },                              // free text
-  { k:'name_th',     label:'ชื่อ (TH)',          w:120, cls:'bold' },                  // free text
-  { k:'name_en',     label:'ชื่อ (EN)',          w:100 },                              // free text
+  { k:'email',       label:'Email',             w:160 },
+  { k:'user_id',     label:'User ID (Asker)',   w:130 },
+  { k:'name_th',     label:'ชื่อ (TH)',          w:120, cls:'bold' },
+  { k:'name_en',     label:'ชื่อ (EN)',          w:100 },
   { k:'shop',        label:'Shop / LINE name',  w:170, type:'dyn', dynKey:'shop' },
   { k:'tier',        label:'Tier',              w:80,  type:'dyn', dynKey:'tier',    render:'tier' },
   { k:'status',      label:'Status',            w:130, type:'dyn', dynKey:'status',  render:'status' },
@@ -948,14 +963,12 @@ const ALL_COLS_META = [
   { k:'brand',       label:'Brand focus',       w:150, type:'dyn', dynKey:'brand' },
   { k:'supply',      label:'Supply type',       w:120, type:'dyn', dynKey:'supply' },
   { k:'shipping',    label:'Shipping type',     w:120, type:'dyn', dynKey:'shipping' },
-  { k:'line_group',  label:'Line Group name',   w:190 },                              // free text
-  { k:'remark',      label:'Remark',            w:160 },                              // free text
+  { k:'line_group',  label:'Line Group name',   w:190 },
+  { k:'remark',      label:'Remark',            w:160 },
 ];
 
-// Cols where users type free text (no dropdown)
 const FREE_TEXT_COLS = new Set(['email','user_id','name_th','name_en','line_group','remark','no']);
 
-// pinned = Set of column keys that are frozen (left side)
 let pinnedKeys = new Set(
   JSON.parse(localStorage.getItem('pinnedCols26') || '["_act","no","kam","email"]')
 );
@@ -964,7 +977,6 @@ function savePinned() {
   localStorage.setItem('pinnedCols26', JSON.stringify([...pinnedKeys]));
 }
 
-// Always-pinned cols first, then the rest in order
 function getColOrder() {
   const order = JSON.parse(localStorage.getItem('colOrder26') || 'null');
   if (order) {
@@ -977,7 +989,6 @@ function getFrozen() {
   return getColOrder().filter(c => pinnedKeys.has(c.k) || c.alwaysPin);
 }
 
-/* ── scrollable (non-frozen) cols = all cols NOT currently pinned ── */
 const ONBOARD_MONTH = { k:'month', label:'เดือน Onboard', w:110, type:'sel', opts:MONTHS };
 
 const MONTHLY_SECS = [
@@ -987,7 +998,6 @@ const MONTHLY_SECS = [
   { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85 },
 ];
 
-// Q grouping: Q1=Jan-Mar, Q2=Apr-Jun, Q3=Jul-Sep, Q4=Oct-Dec
 const QUARTERS = {
   Q1: ['Jan','Feb','Mar'],
   Q2: ['Apr','May','Jun'],
@@ -1005,9 +1015,8 @@ function calcQ(r, metric) {
   };
 }
 
-/* ── sort state ── */
-let sortKey = null;  // column key being sorted
-let sortDir = 1;     // 1 = asc, -1 = desc
+let sortKey = null;
+let sortDir = 1;
 
 function sortBy(key) {
   if (sortKey === key) sortDir *= -1;
@@ -1015,8 +1024,7 @@ function sortBy(key) {
   render();
 }
 
-/* ── filter state ── */
-const activeFilters = {}; // { kam: Set, status: Set, ... }
+const activeFilters = {};
 
 function toggleFilter(key, val) {
   if (!activeFilters[key]) activeFilters[key] = new Set();
@@ -1036,14 +1044,17 @@ function clearAllFilters() {
   render();
 }
 
-/* ── state ── */
 let canEdit = false;
 let tab = 'vendor';
 let vData = [], oData = [];
-let editing = null, delId = null;
+let editing = null;
+
+// ── FIX BUG 1: Store pending delete info at module level, never cleared by render ──
+const _pendingDel = { id: null, tab: null };
 
 const getData    = () => tab === 'vendor' ? vData : oData;
-// Returns scrollable (non-pinned) cols for current tab
+const getAllData  = (t) => t === 'vendor' ? vData : oData; // FIX: tab-aware data getter
+
 function getInfoCols() {
   const frozenKeys = new Set(getFrozen().map(c => c.k));
   const scrollCols = getColOrder().filter(c => !frozenKeys.has(c.k));
@@ -1104,12 +1115,17 @@ function saveUrl() {
   localStorage.setItem('srawurl26', document.getElementById('rawUrl').value.trim());
 }
 
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+// FIX BUG 2: uid() must be truly unique — use crypto.randomUUID if available
+function uid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,8) + Math.random().toString(36).slice(2,8);
+}
 
 function blank() {
-  const d = getData();
+  // FIX BUG 2: use vData.length / oData.length directly (not getData() which could be filtered)
+  const len = tab === 'vendor' ? vData.length : oData.length;
   return {
-    _id:uid(), no:String(d.length+1),
+    _id: uid(), no: String(len + 1),
     shop:'', email:'', user_id:'', name_th:'', name_en:'',
     kam:'', month:'', tier:'', status:'', size:'', group:'',
     category:'', seller_type:'TH', brand:'', supply:'',
@@ -1134,7 +1150,6 @@ function saveRow(id) {
   const r = getData().find(x=>x._id===id); if(r) delete r._new;
   editing = null; persist(); render(); syncSheet();
   toast('Saved');
-  // Auto-pull perf data for this seller if has email
   if (r && r.email) {
     setTimeout(() => pullPerfData([id]), 300);
   }
@@ -1148,48 +1163,68 @@ function cancelEdit(id) {
   }
   editing=null; render();
 }
-function setF(id,k,v) { const r=getData().find(x=>x._id===id); if(r) r[k]=v; }
+
+// FIX BUG 2: setF uses event delegation via data-attributes — no inline oninput string interpolation issues
+function setF(id, k, v) {
+  // Search both arrays to find the row by id, regardless of current tab
+  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id);
+  if (r) r[k] = v;
+}
+
 function setM(id,mk,m,v) {
   // No-op — monthly data is pulled from Raw2026_KAM automatically
 }
+
+// FIX BUG 1: askDel stores id AND tab in _pendingDel object (not in DOM, not cleared by render)
 function askDel(id) {
   if(!canEdit) { showLock(); return; }
-  delId = id;
-  const modal = document.getElementById('delModal');
-  modal.dataset.pendingId = id; // store in DOM — survives any JS re-render
-  const r = getData().find(x=>x._id===id);
-  document.getElementById('delName').textContent=(r&&(r.shop||r.email))||'this seller';
-  modal.classList.add('open');
+  // Find the row in both arrays to determine which tab it belongs to
+  const inVendor = vData.find(x=>x._id===id);
+  const inOnboard = oData.find(x=>x._id===id);
+  const rowTab = inVendor ? 'vendor' : (inOnboard ? 'onboard' : tab);
+  const r = inVendor || inOnboard;
+
+  _pendingDel.id  = id;
+  _pendingDel.tab = rowTab;
+
+  document.getElementById('delName').textContent = (r && (r.shop || r.email)) || 'this seller';
+  document.getElementById('delModal').classList.add('open');
 }
+
 function closeMdl(){
   document.getElementById('delModal').classList.remove('open');
-  delId = null;
+  _pendingDel.id  = null;
+  _pendingDel.tab = null;
 }
+
+// FIX BUG 1: confirmDel reads from _pendingDel (never reset by render), uses correct tab array
 function confirmDel(){
-  // Read delId from DOM data attribute — immune to async reset
-  const modal = document.getElementById('delModal');
-  const idToDelete = modal.dataset.pendingId;
-  if(!idToDelete) return;
-  modal.dataset.pendingId = '';
+  const idToDelete = _pendingDel.id;
+  const tabToDelete = _pendingDel.tab;
+  if (!idToDelete) return;
+
   document.getElementById('delModal').classList.remove('open');
-  if(tab==='vendor') vData=vData.filter(x=>x._id!==idToDelete);
-  else oData=oData.filter(x=>x._id!==idToDelete);
-  delId = null;
+  _pendingDel.id  = null;
+  _pendingDel.tab = null;
+
+  if (tabToDelete === 'vendor') {
+    vData = vData.filter(x => x._id !== idToDelete);
+  } else {
+    oData = oData.filter(x => x._id !== idToDelete);
+  }
+
   persist(); render(); syncSheet(); toast('Removed');
 }
+
 function switchTab(name, el) {
   tab=name; editing=null;
-  /* sidebar */
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-  /* find sidebar btn */
   const sbBtn = name==='vendor'
     ? document.querySelector('.sb-item:nth-child(2)')
     : document.querySelector('.sb-item:nth-child(3)');
   if(sbBtn) sbBtn.classList.add('active');
-  /* filter tabs */
   document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
   document.getElementById('ftab-'+name).classList.add('on');
-  /* title */
   const titles = {vendor:'Vendor perf 2026', onboard:'VA Onboard 2026'};
   document.getElementById('pageTitle').textContent = titles[name];
   render();
@@ -1218,15 +1253,12 @@ function fmt(n) {
 function gmvTot(r){ return Object.values(r.gmv||{}).reduce((a,b)=>a+(+b||0),0); }
 
 /* ── render ── */
-/* ── build a header cell with inline sort+filter ── */
 function makeHC(c, w) {
   const isSort    = sortKey === c.k;
   const hasFilter = activeFilters[c.k] && activeFilters[c.k].size > 0;
   const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
   const sortArrow = isSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
 
-  // Filterable columns
-  // Use dynOpts for all filterable columns
   const filterCols = {};
   Object.keys(dynOpts).forEach(k => { filterCols[k] = dynOpts[k]; });
   filterCols['month'] = MONTHS;
@@ -1246,7 +1278,6 @@ function makeHC(c, w) {
     </button>`;
   }
 
-  // manage icon for dyn cols
   if (c.type === 'dyn') {
     html += `<button class="hc-filter-btn" onclick="openMgrPanel('${c.dynKey}',event)" title="Manage list" style="font-size:10px">⚙</button>`;
   }
@@ -1257,13 +1288,10 @@ function makeHC(c, w) {
   return html;
 }
 
-/* ── open inline header dropdown ── */
 function openHCDrop(e, key) {
   e.stopPropagation();
-  // Close all existing
   document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
 
-  // Use dynOpts for all filterable columns
   const filterCols = {};
   Object.keys(dynOpts).forEach(k => { filterCols[k] = dynOpts[k]; });
   filterCols['month'] = MONTHS;
@@ -1271,7 +1299,6 @@ function openHCDrop(e, key) {
   const opts   = filterCols[key] || [];
   const active = activeFilters[key] || new Set();
 
-  // Build all unique values from data (for free-text cols)
   const data = getData();
   const allVals = opts.length ? opts : [...new Set(data.map(r => r[key] || '').filter(Boolean))].sort();
 
@@ -1288,7 +1315,8 @@ function openHCDrop(e, key) {
 
   allVals.forEach(v => {
     const on = active.has(v) ? 'on' : '';
-    inner += `<div class="hcd-opt ${on}" onclick="toggleFilter('${key}','${v.replace(/'/g,"\'")}');renderDropOpts(this,'${key}','${v.replace(/'/g,"\'")}')">
+    const vEsc = v.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    inner += `<div class="hcd-opt ${on}" onclick="toggleFilter('${key}','${vEsc}');renderDropOpts(this,'${key}','${vEsc}')">
       <span class="hcd-chk">✓</span><span>${v}</span>
     </div>`;
   });
@@ -1300,7 +1328,6 @@ function openHCDrop(e, key) {
   drop.innerHTML = inner;
   document.body.appendChild(drop);
 
-  // Position below the button
   const btn = e.currentTarget;
   const rect = btn.getBoundingClientRect();
   drop.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
@@ -1324,7 +1351,6 @@ function filterHCOpts(input) {
 function selectAllHC(key, btn) {
   const drop  = btn.closest('.hc-drop');
   const opts  = [...drop.querySelectorAll('.hcd-opt')];
-  const data  = getData();
   const allVals = opts.map(o => o.querySelector('span:last-child')?.textContent || '');
   const allOn = opts.every(o => o.classList.contains('on'));
   if (allOn) {
@@ -1338,17 +1364,61 @@ function selectAllHC(key, btn) {
   }
 }
 
+// ── FIX BUG 2: Event delegation for cell input changes ──
+// Instead of inline oninput with string interpolation, attach listeners after render
+function attachCellListeners() {
+  // Frozen body
+  document.getElementById('frozenBody').addEventListener('input', handleCellInput);
+  document.getElementById('frozenBody').addEventListener('change', handleCellChange);
+  document.getElementById('frozenBody').addEventListener('keydown', handleCellKeydown);
+  // Scroll body
+  document.getElementById('scrollBodyInner').addEventListener('input', handleCellInput);
+  document.getElementById('scrollBodyInner').addEventListener('change', handleCellChange);
+  document.getElementById('scrollBodyInner').addEventListener('keydown', handleCellKeydown);
+}
 
+function handleCellInput(e) {
+  if (e.target.tagName !== 'INPUT' || e.target.classList.contains('c-in') === false) return;
+  if (e.target.tagName === 'SELECT') return;
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const id = row.dataset.id;
+  const field = e.target.dataset.field;
+  if (!id || !field) return;
+  setF(id, field, e.target.value);
+}
+
+function handleCellChange(e) {
+  if (e.target.tagName !== 'SELECT') return;
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const id = row.dataset.id;
+  const field = e.target.dataset.field;
+  if (!id || !field) return;
+  setF(id, field, e.target.value);
+}
+
+function handleCellKeydown(e) {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const id = row.dataset.id;
+  if (!id) return;
+  if (e.key === 'Enter') { e.preventDefault(); saveRow(id); }
+  if (e.key === 'Escape') { e.preventDefault(); cancelEdit(id); }
+}
+
+// Helper: escape value for HTML attribute
+function esc(v) {
+  return (v||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 function render() {
   const infoCols = getInfoCols();
   const data     = getData();
   const q        = document.getElementById('searchInput').value.toLowerCase();
   let filtered = data.filter(r => {
-    // search
     if (q && ![r.shop,r.email,r.user_id,r.name_th,r.name_en,r.kam,r.tier,r.status,r.category,r.brand]
       .some(v=>(v||'').toLowerCase().includes(q))) return false;
-    // column filters
     for (const [key, vals] of Object.entries(activeFilters)) {
       if (vals.size === 0) continue;
       if (!vals.has(r[key] || '')) return false;
@@ -1356,7 +1426,6 @@ function render() {
     return true;
   });
 
-  /* sort */
   if (sortKey) {
     filtered = [...filtered].sort((a, b) => {
       const va = (a[sortKey] || '').toString().toLowerCase();
@@ -1374,7 +1443,6 @@ function render() {
   const FROZEN = getFrozen();
   const frozenW = FROZEN.reduce((a,c)=>a+c.w,0);
 
-  /* frozen header */
   document.getElementById('frozenHead').innerHTML =
     FROZEN.map(c=>{
       if(c.special) return `<div class="hc" style="width:${c.w}px;min-width:${c.w}px"></div>`;
@@ -1382,12 +1450,9 @@ function render() {
     }).join('');
   document.getElementById('frozenHead').style.width = frozenW + 'px';
 
-  /* scroll header */
   let sh = infoCols.map(c => makeHC(c, c.w)).join('');
   MONTHLY_SECS.forEach(s=>{
-    // TOTAL col
     sh += `<div class="hc ${s.cls}" style="width:130px;min-width:130px;flex-direction:column;align-items:flex-start;gap:1px;height:auto;padding:5px 8px"><span>${s.label}</span><span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span></div>`;
-    // Q1-Q4: Q total then 3 months
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
       sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12)">${qLabel}</div>`;
       qMonths.forEach(m => {
@@ -1431,19 +1496,20 @@ function render() {
         const val = (r[c.k]||'').toString();
         if(isE) {
           if(c.type==='sel') {
-            frow += `<select class="c-in ${c.cls||''}" onchange="setF('${r._id}','${c.k}',this.value)"><option value=""></option>`;
-            c.opts.forEach(o => frow += `<option${val===o?' selected':''}>${o}</option>`);
+            // FIX BUG 2: use data-field attribute instead of inline oninput
+            frow += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
+            c.opts.forEach(o => frow += `<option${val===o?' selected':''}>${esc(o)}</option>`);
             frow += `</select>`;
           } else if(c.type==='dyn') {
             const cellOpts = dynOpts[c.dynKey] || [];
-            frow += `<select class="c-in ${c.cls||''}" onchange="setF('${r._id}','${c.k}',this.value)"><option value=""></option>`;
-            cellOpts.forEach(o => frow += `<option${val===o?' selected':''}>${o}</option>`);
+            frow += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
+            cellOpts.forEach(o => frow += `<option${val===o?' selected':''}>${esc(o)}</option>`);
             frow += `</select>`;
           } else {
-            frow += `<input class="c-in ${c.cls||''}" value="${val.replace(/"/g,'&quot;')}" placeholder="${c.label}" oninput="setF('${r._id}','${c.k}',this.value)" onkeydown="if(event.key==='Enter')saveRow('${r._id}');if(event.key==='Escape')cancelEdit('${r._id}')">`;
+            frow += `<input class="c-in ${c.cls||''}" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
           }
         } else {
-          frow += `<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${val}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
+          frow += `<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
         }
       }
       frow += `</div>`;
@@ -1458,37 +1524,37 @@ function render() {
       const val = (r[c.k]||'').toString();
       if(isE) {
         if(c.type==='sel') {
-          srow += `<select class="c-in" onchange="setF('${r._id}','${c.k}',this.value)"><option value=""></option>`;
-          c.opts.forEach(o=>srow+=`<option${val===o?' selected':''}>${o}</option>`);
+          // FIX BUG 2: use data-field attribute
+          srow += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
+          c.opts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
           srow += `</select>`;
         } else if(c.type==='dyn') {
           const cellOpts = dynOpts[c.dynKey] || [];
-          srow += `<select class="c-in" onchange="setF('${r._id}','${c.k}',this.value)"><option value=""></option>`;
-          cellOpts.forEach(o=>srow+=`<option${val===o?' selected':''}>${o}</option>`);
+          srow += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
+          cellOpts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
           srow += `</select>`;
         } else {
-          srow += `<input class="c-in" value="${val.replace(/"/g,'&quot;')}" placeholder="${c.label}" oninput="setF('${r._id}','${c.k}',this.value)" onkeydown="if(event.key==='Enter')saveRow('${r._id}');if(event.key==='Escape')cancelEdit('${r._id}')">`;
+          // FIX BUG 2: use data-field attribute, no inline oninput
+          srow += `<input class="c-in" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
         }
       } else {
         if(c.render==='status')      srow += statusChip(r[c.k]);
         else if(c.render==='tier')   srow += tierChip(r[c.k]);
         else if(c.render==='seller_type') srow += sellerTypeChip(r[c.k]);
-        else srow += `<span class="c-val ${val?'':'dim'}" title="${val}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
+        else srow += `<span class="c-val ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
       }
       srow += `</div>`;
     });
 
-    /* monthly sections — read-only, pulled from Raw2026_KAM */
+    /* monthly sections */
     MONTHLY_SECS.forEach(s=>{
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
       const qTotals = calcQ(r, s.key);
 
-      // Total all
       srow += `<div class="sc tot-cell" style="width:130px;min-width:130px">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling ? '…' : (tot?fmt(tot):'—')}</span></div>`;
 
-      // Q1-Q4: Q total then 3 months
       Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
         const qVal = qTotals[qLabel] || 0;
         srow += `<div class="sc tot-cell" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.08)">
@@ -1505,9 +1571,22 @@ function render() {
     sb += srow;
   });
 
-  document.getElementById('frozenBody').innerHTML = fb;
-  document.getElementById('frozenBody').style.width = frozenW + 'px';
-  document.getElementById('scrollBodyInner').innerHTML = sb;
+  // FIX BUG 2: Replace innerHTML (removes old listeners) then re-attach via delegation
+  const frozenBodyEl = document.getElementById('frozenBody');
+  const scrollBodyInnerEl = document.getElementById('scrollBodyInner');
+
+  frozenBodyEl.innerHTML = fb;
+  frozenBodyEl.style.width = frozenW + 'px';
+  scrollBodyInnerEl.innerHTML = sb;
+
+  // Re-attach event delegation listeners each render (old ones removed with innerHTML)
+  frozenBodyEl.addEventListener('input', handleCellInput);
+  frozenBodyEl.addEventListener('change', handleCellChange);
+  frozenBodyEl.addEventListener('keydown', handleCellKeydown);
+
+  scrollBodyInnerEl.addEventListener('input', handleCellInput);
+  scrollBodyInnerEl.addEventListener('change', handleCellChange);
+  scrollBodyInnerEl.addEventListener('keydown', handleCellKeydown);
 
   const scrollBody = document.getElementById('scrollBody');
   scrollBody.onscroll = () => syncScroll(scrollBody);
@@ -1535,11 +1614,10 @@ function updateStats() {
 let _lastSyncHash = '';
 async function syncSheet() {
   const url = document.getElementById('scriptUrl').value.trim();
-  if(!url) return; // silent if no URL
-  // Skip if data hasn't changed since last sync
+  if(!url) return;
   const hash = JSON.stringify(vData.length) + JSON.stringify(oData.length) +
                (vData[0]?._id || '') + (oData[0]?._id || '');
-  if (hash === _lastSyncHash) return; // no change
+  if (hash === _lastSyncHash) return;
   _lastSyncHash = hash;
   toast('Syncing…');
   try {
@@ -1556,7 +1634,6 @@ async function syncSheet() {
   } catch { toast('Cannot reach Apps Script','err'); }
 }
 
-/* ── auto-pull: called on load + tab switch ── */
 let _pullTimer = null;
 function autoPull() {
   clearTimeout(_pullTimer);
@@ -1565,12 +1642,10 @@ function autoPull() {
     if (!url) return;
     const data = getData();
     if (!data.length) return;
-    if (delId) return; // don't pull while delete modal is open
     pullPerfData();
   }, 200);
 }
 
-/* ── pull perf data from Raw2026_KAM via Apps Script ── */
 async function pullPerfData(specificIds) {
   const url = document.getElementById('scriptUrl').value.trim();
   if (!url) return;
@@ -1585,10 +1660,9 @@ async function pullPerfData(specificIds) {
   const emails = [...new Set(targets.map(r => r.email).filter(Boolean))];
   if (!emails.length) return;
 
-  // Mark as pulling
   targets.forEach(r => r._pulling = true);
   document.getElementById('rawStatus').textContent = 'กำลังดึงข้อมูล…';
-  if (!delId) render(); // don't re-render (and close modal) while delete is pending
+  render();
 
   try {
     const res = await fetch(url + '?action=getPerf&emails=' + encodeURIComponent(emails.join(',')));
@@ -1605,7 +1679,7 @@ async function pullPerfData(specificIds) {
         r.failed  = perf.failed  || {};
         delete r._pulling;
       });
-      persist(); // save locally only — no Sheet sync on auto-pull
+      persist();
       render();
       document.getElementById('rawStatus').textContent = '✓ pulled ' + new Date().toLocaleTimeString('th-TH');
     } else {
@@ -1619,7 +1693,6 @@ async function pullPerfData(specificIds) {
   }
 }
 
-/* ── raw data ── */
 async function fetchRaw() {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) { toast('Add Apps Script URL','err'); return; }
@@ -1638,7 +1711,6 @@ async function fetchRaw() {
   }
 }
 
-/* ── export ── */
 function exportCSV() {
   const d = getData();
   const keys = ['no','shop','email','user_id','name_th','name_en','kam','month','tier','status','size','group','category','seller_type','brand','supply','shipping','line_group','remark'];
@@ -1653,7 +1725,6 @@ function exportCSV() {
   a.click();
 }
 
-/* ── manage group/category ── */
 let mgrKey = null;
 
 function openMgrPanel(key, e) {
@@ -1666,12 +1737,11 @@ function openMgrPanel(key, e) {
   renderMgrList();
   panel.classList.add('open');
 
-  // Always anchor below the "Manage lists" button in topbar
   const anchor = document.getElementById('mgrDropBtn');
   if (anchor) {
     const rect = anchor.getBoundingClientRect();
     const pw = 260;
-    let left = rect.right - pw; // right-align with button
+    let left = rect.right - pw;
     if (left < 8) left = 8;
     panel.style.left = left + 'px';
     panel.style.top  = (rect.bottom + 6) + 'px';
@@ -1709,31 +1779,27 @@ function addMgrItem() {
   }
   inp.value = '';
   renderMgrList();
-  render(); // refresh dropdowns in cells
-  inp.focus(); // stay focused for next entry
+  render();
+  inp.focus();
   toast('Added: ' + val, 'ok');
 }
 
 function deleteMgrItem(idx) {
   const arr = dynOpts[mgrKey];
   if (arr) { arr.splice(idx, 1); saveDyn(mgrKey); }
-  renderMgrList(); // re-render list only, keep panel open
-  render();        // refresh cell dropdowns
+  renderMgrList();
+  render();
 }
 
-// Unified outside-click handler
 document.addEventListener('click', e => {
   if (!e.target.closest('.hc-drop') && !e.target.closest('.hc-filter-btn')) {
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
   }
-  // mgrPanel closes only via X button or Escape — not outside click
   if (!e.target.closest('#frzPanel') && !e.target.closest('#frzToggleBtn')) {
     document.getElementById('frzPanel')?.classList.remove('open');
   }
-  // mgrPanel — only close via X or Escape, NOT outside click
 });
 
-/* ── freeze settings ── */
 function openFrzPanel(e) {
   e && e.stopPropagation();
   const panel = document.getElementById('frzPanel');
@@ -1752,7 +1818,7 @@ function openFrzPanel(e) {
 
 function renderFrzPanel() {
   const btns = document.getElementById('frzBtns');
-  const cols = getColOrder().filter(c => !c.alwaysPin); // excludable cols
+  const cols = getColOrder().filter(c => !c.alwaysPin);
   btns.innerHTML = cols.map(c => {
     const isPinned  = pinnedKeys.has(c.k);
     return `<div class="frz-col-row" data-key="${c.k}">
@@ -1779,14 +1845,12 @@ function closeFrzPanel() {
   document.getElementById('frzPanel').classList.remove('open');
 }
 
-/* ── manage lists menu ── */
 function toggleMgrMenu(e) {
   e && e.stopPropagation();
   const menu = document.getElementById('mgrMenu');
   const isOpen = menu.style.display !== 'none';
   if (isOpen) { menu.style.display = 'none'; return; }
 
-  // Build menu items from all dyn cols
   const dynCols = ALL_COLS_META.filter(c => c.type === 'dyn');
   menu.innerHTML = dynCols.map(c =>
     `<div style="padding:6px 14px;font-size:12px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s"
@@ -1807,7 +1871,6 @@ document.addEventListener('click', e => {
   }
 });
 
-/* ── load dynOpts from storage (override defaults if saved) ── */
 function loadDynOpts() {
   Object.keys(DYN_DEFAULTS).forEach(k => {
     const saved = localStorage.getItem('dyn26_' + k);
@@ -1815,11 +1878,24 @@ function loadDynOpts() {
       try { dynOpts[k] = JSON.parse(saved); } catch(e) {}
     }
   });
-  // Also add 'shop' dynKey from saved sellers
   if (!dynOpts.shop) dynOpts.shop = [];
 }
 
-/* ── toast ── */
+function confirmClearAll() {
+  document.getElementById('clearModal').classList.add('open');
+}
+
+function doClearAll() {
+  localStorage.removeItem('vp26');
+  localStorage.removeItem('vo26');
+  localStorage.removeItem('sraw26');
+  vData = [];
+  oData = [];
+  document.getElementById('clearModal').classList.remove('open');
+  render();
+  toast('Cleared all local data', 'ok');
+}
+
 function toast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = 'toast show '+(type||'');
@@ -1828,7 +1904,6 @@ function toast(msg, type) {
 
 load(); render();
 
-// Escape closes mgr panel
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeMgrPanel();
@@ -1836,7 +1911,6 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
   }
 });
-// Auto-pull on page load (after short delay to let UI paint first)
 setTimeout(autoPull, 500);
 </script>
 </body>
