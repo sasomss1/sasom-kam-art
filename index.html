@@ -249,18 +249,22 @@ body {
 /* ── FROZEN SCROLL TABLE ── */
 .tbl-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
-.tbl-head { display: flex; flex-shrink: 0; border-bottom: 1.5px solid var(--border); background: var(--bg); }
+.tbl-head { display: flex; flex-shrink: 0; border-bottom: 1.5px solid var(--border); background: var(--bg); overflow: hidden; }
 .tbl-head-frozen { flex-shrink: 0; display: flex; }
 .tbl-head-scroll { flex: 1; overflow: hidden; }
 .tbl-head-scroll-inner { display: flex; min-width: max-content; }
 
-.tbl-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
-.tbl-frozen { flex-shrink: 0; overflow: hidden; border-right: 1.5px solid var(--border); }
-.tbl-scroll { flex: 1; overflow: auto; }
-.tbl-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-.tbl-scroll::-webkit-scrollbar-track { background: transparent; }
-.tbl-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-.tbl-scroll-inner { min-width: max-content; }
+/* Single scroll container — frozen cols use sticky left */
+.tbl-body { flex: 1; overflow: auto; min-height: 0; }
+.tbl-body::-webkit-scrollbar { height: 6px; width: 6px; }
+.tbl-body::-webkit-scrollbar-track { background: transparent; }
+.tbl-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.tbl-body-inner { min-width: max-content; display: flex; flex-direction: column; }
+
+/* Legacy aliases — kept so render() HTML still works */
+.tbl-frozen { display: none; }
+.tbl-scroll { display: none; }
+.tbl-scroll-inner { display: none; }
 
 /* header cells */
 .hc {
@@ -289,26 +293,30 @@ body {
 .hc.sec-lst  { background: var(--green-bg);  color: var(--green);  border-right: 2px solid #bbf7d0; }
 .hc.sec-fail { background: var(--rose-bg);   color: var(--rose);   border-right: 2px solid #fecdd3; }
 
-/* rows */
+/* rows — single unified row */
 .row {
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid var(--border);
   transition: background .1s;
+  min-width: max-content;
 }
 .row:last-child { border-bottom: none; }
 .row:hover .fc, .row:hover .sc { background: #faf8f5; }
 .row.editing .fc, .row.editing .sc { background: #fffcf0 !important; }
-.row.editing .fc { border-left: 2px solid var(--amber); }
+.row.editing .fc:first-child { border-left: 2px solid var(--amber); }
 .row.is-new .fc, .row.is-new .sc { background: var(--green-bg) !important; }
-.row.is-new .fc { border-left: 2px solid var(--green); }
+.row.is-new .fc:first-child { border-left: 2px solid var(--green); }
 
-/* frozen / scroll cells */
+/* frozen cells — sticky left */
 .fc {
   min-height: 40px; display: flex; align-items: center;
   padding: 5px 10px; border-right: 1px solid var(--border);
   flex-shrink: 0; background: var(--surface); transition: background .1s;
+  position: sticky;
+  z-index: 2;
 }
+/* scroll cells */
 .sc {
   min-height: 40px; display: flex; align-items: center;
   padding: 5px 10px; border-right: 1px solid var(--border);
@@ -1013,11 +1021,8 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
             <div class="tbl-head-row2-inner" id="scrollHeadInner2"></div>
           </div>
         </div>
-        <div class="tbl-body">
-          <div class="tbl-frozen" id="frozenBody"></div>
-          <div class="tbl-scroll" id="scrollBody" onscroll="syncScroll(this)">
-            <div class="tbl-scroll-inner" id="scrollBodyInner"></div>
-          </div>
+        <div class="tbl-body" id="tblBody" onscroll="syncScroll(this)">
+          <div class="tbl-body-inner" id="bodyInner"></div>
         </div>
       </div>
       <button class="add-row" id="addRowBtn" onclick="requireEdit(addRow)">
@@ -1626,16 +1631,9 @@ function startColResize(e, colKey, handle) {
     const dx = ev.clientX - _resizeDrag.startX;
     const newW = Math.max(40, _resizeDrag.startW + dx);
     colWidths[_resizeDrag.colKey] = Math.round(newW);
-    // Live-update ALL cells (header + body) for this col
     document.querySelectorAll(`[data-col="${_resizeDrag.colKey}"]`).forEach(el => {
       el.style.width = newW + 'px';
       el.style.minWidth = newW + 'px';
-    });
-    // If frozen col changed, update frozen row widths too
-    const FROZEN = getFrozen();
-    const newFrozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
-    document.querySelectorAll('.tbl-frozen, .tbl-head-frozen, [id="frozenBody"] .row, [id="frozenHead"]').forEach(el => {
-      if (el.classList.contains('row')) el.style.width = newFrozenW + 'px';
     });
   }
 
@@ -1827,12 +1825,34 @@ function render() {
   const FROZEN = getFrozen();
   const frozenW = FROZEN.reduce((a,c)=>a+getColW(c.k),0);
 
-  document.getElementById('frozenHead').innerHTML =
-    FROZEN.map(c => {
-      const cw = getColW(c.k);
-      if(c.special) return `<div class="hc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">${resizeHandle(c.k)}</div>`;
-      return makeHC(c, cw);
-    }).join('');
+  // Compute sticky offsets for frozen header cells (same as body)
+  let _hLeft = 0;
+  const frozenHeadHTML = FROZEN.map(c => {
+    const cw = getColW(c.k);
+    const lft = _hLeft;
+    const isLast = c.k === lastFrozenKey;
+    _hLeft += cw;
+    if(c.special) return `<div class="hc" style="width:${cw}px;min-width:${cw}px;position:sticky;left:${lft}px;z-index:3;background:var(--bg)${isLast?';border-right:1.5px solid var(--border2)':''}" data-col="${c.k}">${resizeHandle(c.k)}</div>`;
+    // makeHC already returns the full div, so we need to inline sticky here
+    const cMeta = c;
+    const isSort2    = sortKey === c.k;
+    const hasFilter2 = activeFilters[c.k] && activeFilters[c.k].size > 0;
+    const sortCls2   = isSort2 ? (sortDir===1?'asc':'desc') : '';
+    const sortArrow2 = isSort2 ? (sortDir===1?'↑':'↓') : '↕';
+    const filterCols2 = {}; Object.keys(dynOpts).forEach(k=>{filterCols2[k]=dynOpts[k];}); filterCols2['month']=MONTHS;
+    const isFilterable2 = !!filterCols2[c.k];
+    const lStyle = isSort2 ? 'font-weight:700;color:var(--ink)' : '';
+    let h = `<div class="hc" style="width:${cw}px;min-width:${cw}px;padding:0 6px;position:sticky;left:${lft}px;z-index:3;background:var(--bg)${isLast?';border-right:1.5px solid var(--border2)':''}" title="${c.label}" data-col="${c.k}">
+      <div class="hc-inner">
+        <span class="hc-label" style="${lStyle}">${c.label}</span>
+        <span class="hc-icons">
+          <button class="hc-sort-btn ${sortCls2}" onclick="sortBy('${c.k}')" title="Sort">${sortArrow2}</button>`;
+    if(isFilterable2) h+=`<button class="hc-filter-btn ${hasFilter2?'active':''}" onclick="openHCDrop(event,'${c.k}')" title="Filter"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>`;
+    if(c.type==='dyn') h+=`<button class="hc-filter-btn" onclick="openMgrPanel('${c.dynKey}',event)" title="Manage list" style="font-size:10px">⚙</button>`;
+    h += `</span></div>${resizeHandle(c.k)}</div>`;
+    return h;
+  }).join('');
+  document.getElementById('frozenHead').innerHTML = frozenHeadHTML;
   document.getElementById('frozenHead').style.width = frozenW + 'px';
 
   // Build scroll header: info cols + metric sections
@@ -1886,141 +1906,139 @@ function render() {
   document.getElementById('scrollHeadInner').innerHTML = sh;
   document.getElementById('tblHead2').style.display = 'none';
 
+  // Compute sticky left offsets for frozen cols
+  const frozenLeftOf = {};
+  let _left = 0;
+  FROZEN.forEach(c => {
+    frozenLeftOf[c.k] = _left;
+    _left += getColW(c.k);
+  });
+  // Mark last frozen col for border
+  const lastFrozenKey = FROZEN.length ? FROZEN[FROZEN.length-1].k : null;
+
   if(!filtered.length) {
     const hasRangeFilter = Object.keys(activeRangeFilters).length > 0;
     const hasSetFilter   = Object.keys(activeFilters).length > 0;
-    document.getElementById('frozenBody').innerHTML = `<div class="empty-msg">No sellers${q?' matching search':(hasRangeFilter||hasSetFilter)?' matching filters':''}</div>`;
-    document.getElementById('scrollBodyInner').innerHTML = '';
+    document.getElementById('bodyInner').innerHTML = `<div class="empty-msg">No sellers${q?' matching search':(hasRangeFilter||hasSetFilter)?' matching filters':''}</div>`;
     updateStats(); return;
   }
 
-  let fb='', sb='';
+  let rows = '';
 
   filtered.forEach((r, rowIdx) => {
     const isE = editing===r._id;
     const cls = r._new?'is-new':isE?'editing':'';
 
-    /* frozen row */
-    let frow = `<div class="row ${cls}" data-id="${r._id}" style="width:${frozenW}px">`;
+    rows += `<div class="row ${cls}" data-id="${r._id}">`;
+
+    /* ── frozen cells ── */
     FROZEN.forEach(c => {
       const cw = getColW(c.k);
-      frow += `<div class="fc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">`;
+      const lft = frozenLeftOf[c.k];
+      const isLast = c.k === lastFrozenKey;
+      rows += `<div class="fc" style="width:${cw}px;min-width:${cw}px;left:${lft}px${isLast?';border-right:1.5px solid var(--border2)':''}" data-col="${c.k}">`;
       if(c.special==='actions') {
-        frow += `<div class="row-acts">`;
+        rows += `<div class="row-acts">`;
         if(isE) {
-          frow += `<button class="ia sv" onclick="saveRow('${r._id}')" title="Save"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>`;
-          frow += `<button class="ia" onclick="cancelEdit('${r._id}')" title="Cancel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`;
+          rows += `<button class="ia sv" onclick="saveRow('${r._id}')" title="Save"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>`;
+          rows += `<button class="ia" onclick="cancelEdit('${r._id}')" title="Cancel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`;
         } else {
-          frow += `<button class="ia" onclick="startEdit('${r._id}')" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>`;
-          frow += `<button class="ia dl" onclick="askDel('${r._id}')" title="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`;
+          rows += `<button class="ia" onclick="startEdit('${r._id}')" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>`;
+          rows += `<button class="ia dl" onclick="askDel('${r._id}')" title="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`;
         }
-        frow += `</div>`;
+        rows += `</div>`;
       } else if(c.k==='no') {
-        frow += `<span class="c-num">${rowIdx + 1}</span>`;
+        rows += `<span class="c-num">${rowIdx + 1}</span>`;
       } else {
         const val = (r[c.k]||'').toString();
         if(isE) {
           if(c.type==='sel') {
-            frow += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
-            c.opts.forEach(o => frow += `<option${val===o?' selected':''}>${esc(o)}</option>`);
-            frow += `</select>`;
+            rows += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
+            c.opts.forEach(o => rows += `<option${val===o?' selected':''}>${esc(o)}</option>`);
+            rows += `</select>`;
           } else if(c.type==='dyn') {
             const cellOpts = dynOpts[c.dynKey] || [];
-            frow += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
-            cellOpts.forEach(o => frow += `<option${val===o?' selected':''}>${esc(o)}</option>`);
-            frow += `</select>`;
+            rows += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
+            cellOpts.forEach(o => rows += `<option${val===o?' selected':''}>${esc(o)}</option>`);
+            rows += `</select>`;
           } else {
-            frow += `<input class="c-in ${c.cls||''}" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
+            rows += `<input class="c-in ${c.cls||''}" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
           }
         } else {
-          frow += `<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
+          rows += `<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
         }
       }
-      frow += `</div>`;
+      rows += `</div>`;
     });
-    frow += `</div>`;
-    fb += frow;
 
-    /* scroll row */
-    let srow = `<div class="row ${cls}" data-id="${r._id}" style="display:flex;align-items:stretch">`;
+    /* ── scroll cells ── */
     infoCols.forEach(c => {
       const cw = getColW(c.k);
-      srow += `<div class="sc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">`;
+      rows += `<div class="sc" style="width:${cw}px;min-width:${cw}px" data-col="${c.k}">`;
       const val = (r[c.k]||'').toString();
       if(isE) {
         if(c.type==='sel') {
-          srow += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
-          c.opts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
-          srow += `</select>`;
+          rows += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
+          c.opts.forEach(o=>rows+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
+          rows += `</select>`;
         } else if(c.type==='dyn') {
           const cellOpts = dynOpts[c.dynKey] || [];
-          srow += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
-          cellOpts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
-          srow += `</select>`;
+          rows += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
+          cellOpts.forEach(o=>rows+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
+          rows += `</select>`;
         } else {
-          srow += `<input class="c-in" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
+          rows += `<input class="c-in" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
         }
       } else {
-        if(c.render==='status')           srow += statusChip(r[c.k]);
-        else if(c.render==='tier')        srow += tierChip(r[c.k]);
-        else if(c.render==='seller_type') srow += sellerTypeChip(r[c.k]);
-        else srow += `<span class="c-val ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
+        if(c.render==='status')           rows += statusChip(r[c.k]);
+        else if(c.render==='tier')        rows += tierChip(r[c.k]);
+        else if(c.render==='seller_type') rows += sellerTypeChip(r[c.k]);
+        else rows += `<span class="c-val ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
       }
-      srow += `</div>`;
+      rows += `</div>`;
     });
 
-    /* monthly sections */
+    /* ── monthly sections ── */
     MONTHLY_SECS.forEach(s => {
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
       const qTotals = calcQ(r, s.key);
       const totW = getColW(s.key+'_tot');
 
-      srow += `<div class="sc tot-cell" style="width:${totW}px;min-width:${totW}px" data-col="${s.key}_tot">
+      rows += `<div class="sc tot-cell" style="width:${totW}px;min-width:${totW}px" data-col="${s.key}_tot">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling?'…':(tot?fmt(tot):'—')}</span></div>`;
 
       Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
         const qVal  = qTotals[qLabel] || 0;
         const qCKey = s.key + '_' + qLabel;
         const qW    = getColW(qCKey);
-        srow += `<div class="sc tot-cell" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.08)" data-col="${qCKey}">
+        rows += `<div class="sc tot-cell" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.08)" data-col="${qCKey}">
           <span class="c-val mono ${qVal?'':'dim'}">${isPulling?'…':(qVal?fmt(qVal):'—')}</span></div>`;
         qMonths.forEach(m => {
           const v    = (r[s.key]||{})[m]||0;
           const mCKey = s.key + '_' + m;
           const mW   = getColW(mCKey);
-          srow += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
-          srow += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
-          srow += `</div>`;
+          rows += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
+          rows += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
+          rows += `</div>`;
         });
       });
     });
-    srow += `</div>`;
-    sb += srow;
+
+    rows += `</div>`;
   });
 
-  const frozenBodyEl = document.getElementById('frozenBody');
-  const scrollBodyInnerEl = document.getElementById('scrollBodyInner');
-  frozenBodyEl.innerHTML = fb;
-  frozenBodyEl.style.width = frozenW + 'px';
-  scrollBodyInnerEl.innerHTML = sb;
-
-  frozenBodyEl.addEventListener('input', handleCellInput);
-  frozenBodyEl.addEventListener('change', handleCellChange);
-  frozenBodyEl.addEventListener('keydown', handleCellKeydown);
-  scrollBodyInnerEl.addEventListener('input', handleCellInput);
-  scrollBodyInnerEl.addEventListener('change', handleCellChange);
-  scrollBodyInnerEl.addEventListener('keydown', handleCellKeydown);
-
-  const scrollBody = document.getElementById('scrollBody');
-  scrollBody.onscroll = () => syncScroll(scrollBody);
+  const bodyInnerEl = document.getElementById('bodyInner');
+  bodyInnerEl.innerHTML = rows;
+  bodyInnerEl.addEventListener('input', handleCellInput);
+  bodyInnerEl.addEventListener('change', handleCellChange);
+  bodyInnerEl.addEventListener('keydown', handleCellKeydown);
 
   document.getElementById('addRowBtn').disabled = !canEdit;
   updateStats();
 }
 
 function syncScroll(el) {
-  document.getElementById('frozenBody').scrollTop = el.scrollTop;
   document.getElementById('scrollHead').scrollLeft  = el.scrollLeft;
   document.getElementById('scrollHead2').scrollLeft = el.scrollLeft;
 }
