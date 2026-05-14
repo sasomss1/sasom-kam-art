@@ -398,6 +398,68 @@ select.c-in {
 }
 .m-in:focus { border-bottom-color: var(--amber); }
 
+/* ── multi-select dropdown ── */
+.ms-wrap {
+  position: relative; width: 100%; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  min-height: 26px; padding: 2px 18px 2px 0;
+  border-bottom: 1.5px solid var(--border2);
+  transition: border-color .15s;
+}
+.ms-wrap.open { border-bottom-color: var(--amber); }
+.ms-wrap::after {
+  content: '';
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink4);
+  pointer-events: none;
+}
+.ms-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--border); color: var(--ink2);
+  border-radius: 10px; padding: 1px 6px;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.ms-chip-x {
+  cursor: pointer; color: var(--ink4); font-size: 12px; line-height: 1;
+  border: none; background: none; padding: 0; margin-left: 1px;
+}
+.ms-chip-x:hover { color: var(--rose); }
+.ms-placeholder { font-size: 12px; color: var(--ink4); }
+.ms-drop {
+  display: none; position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 400; min-width: 160px; max-width: 240px;
+  padding: 4px 0; max-height: 220px; overflow-y: auto;
+}
+.ms-drop.open { display: block; }
+.ms-drop-search {
+  margin: 5px 8px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 4px 8px; font-size: 11px; font-family: inherit;
+  color: var(--ink); background: var(--bg); outline: none;
+  width: calc(100% - 16px); box-sizing: border-box;
+}
+.ms-drop-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; font-size: 12px; color: var(--ink2);
+  cursor: pointer; transition: background .1s; white-space: nowrap;
+}
+.ms-drop-opt:hover { background: var(--bg); }
+.ms-drop-opt.on { color: var(--ink); font-weight: 500; }
+.ms-drop-chk {
+  width: 14px; height: 14px; flex-shrink: 0;
+  border: 1.5px solid var(--border2); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; transition: all .1s;
+}
+.ms-drop-opt.on .ms-drop-chk { background: var(--ink); border-color: var(--ink); color: #fff; }
+
 /* row actions */
 .row-acts { display: flex; gap: 2px; opacity: 0; transition: opacity .1s; }
 .row:hover .row-acts, .row.editing .row-acts { opacity: 1; }
@@ -627,7 +689,83 @@ body.row-dragging * { cursor: grabbing !important; user-select: none !important;
 .frz-col-badge.pinned { background: var(--ink); color: #fff; }
 .frz-col-badge.scroll { background: var(--bg); color: var(--ink4); border: 1px solid var(--border); }
 
-/* ── inline header filter ── */
+/* ── dyn chips ── */
+.chip-dyn { display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;margin:1px; }
+/* tier colors */
+.chip-t1  { background:#1a1714;color:#fff; }
+.chip-t2  { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+.chip-t3  { background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe; }
+.chip-t4  { background:#f8fafc;color:#475569;border:1px solid #e2e8f0; }
+.chip-tse { background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:700; }
+/* status colors */
+.chip-st-vvip    { background:#1a1714;color:#fff; }
+.chip-st-active  { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+.chip-st-focus   { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+.chip-st-unactive{ background:#f8fafc;color:#64748b;border:1px solid #e2e8f0; }
+.chip-st-waiting { background:#fffbeb;color:#d97706;border:1px solid #fde68a; }
+.chip-st-churn   { background:#f9fafb;color:#9ca3af;border:1px solid #e5e7eb;text-decoration:line-through; }
+.chip-st-other   { background:#f8fafc;color:#64748b;border:1px solid #e2e8f0; }
+/* size */
+.chip-sz-s  { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+.chip-sz-m  { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+.chip-sz-l  { background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe; }
+.chip-sz-xl { background:#1a1714;color:#fff; }
+/* category */
+.chip-cat { background:#f0fdfa;color:#0d9488;border:1px solid #a7f3d0; }
+/* brand */
+.chip-brand { background:#fff7ed;color:#c2410c;border:1px solid #fed7aa; }
+/* supply */
+.chip-supply { background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff; }
+/* shipping */
+.chip-ship { background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd; }
+/* seller type */
+.chip-th    { background:#f0fdfa;color:#0d9488;border:1px solid #a7f3d0;font-size:10px; }
+.chip-inter { background:#fffbeb;color:#d97706;border:1px solid #fde68a;font-size:10px; }
+
+/* multi chips wrap */
+.chips-wrap { display:flex;flex-wrap:wrap;gap:2px;align-items:center; }
+
+/* ── multi-select dropdown ── */
+.multi-drop {
+  display:none;position:fixed;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow);
+  z-index:400;width:220px;padding:0;overflow:hidden;
+}
+.multi-drop.open { display:block; }
+.multi-drop-head { padding:10px 12px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border); }
+.multi-drop-title { font-size:12px;font-weight:600;color:var(--ink); }
+.multi-drop-opts { max-height:220px;overflow-y:auto;padding:4px 0; }
+.multi-drop-opt {
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;font-size:12px;color:var(--ink2);
+  cursor:pointer;transition:background .1s;
+}
+.multi-drop-opt:hover { background:var(--bg); }
+.multi-drop-opt.on { color:var(--ink);font-weight:500; }
+.multi-drop-chk {
+  width:15px;height:15px;flex-shrink:0;
+  border:1.5px solid var(--border2);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;transition:all .1s;
+}
+.multi-drop-opt.on .multi-drop-chk { background:var(--ink);border-color:var(--ink);color:#fff; }
+.multi-drop-done {
+  padding:8px 12px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:6px;
+}
+
+/* ── mgr item drag ── */
+.mgr-item { cursor:default; }
+.mgr-item.mgr-drag-src { opacity:.35; }
+.mgr-item.mgr-drag-above { box-shadow:inset 0 2px 0 var(--amber); }
+.mgr-item.mgr-drag-below { box-shadow:inset 0 -2px 0 var(--amber); }
+.mgr-drag-handle {
+  width:16px;display:flex;align-items:center;justify-content:center;
+  cursor:grab;color:var(--ink4);opacity:.5;flex-shrink:0;
+}
+.mgr-drag-handle:active { cursor:grabbing; }
+.mgr-item:hover .mgr-drag-handle { opacity:1; }
 .hc { position: relative; }
 .hc-inner {
   display: flex; align-items: center; justify-content: space-between;
@@ -1145,6 +1283,19 @@ button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
   </div>
 </div>
 
+<!-- MULTI-SELECT DROPDOWN -->
+<div class="multi-drop" id="multiDrop">
+  <div class="multi-drop-head">
+    <span class="multi-drop-title" id="multiDropTitle">Select</span>
+    <button class="mgr-close" onclick="closeMultiDrop()">×</button>
+  </div>
+  <div class="multi-drop-opts" id="multiDropOpts"></div>
+  <div class="multi-drop-done">
+    <button class="range-btn clear" style="flex:0;padding:0 10px" onclick="clearMultiSel()">Clear</button>
+    <button class="range-btn apply" style="flex:0;padding:0 14px" onclick="closeMultiDrop()">Done</button>
+  </div>
+</div>
+
 <script>
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PWD    = 'SASOMART';
@@ -1182,12 +1333,12 @@ const ALL_COLS_META = [
   { k:'tier',        label:'Tier',              w:80,  type:'dyn', dynKey:'tier',    render:'tier' },
   { k:'status',      label:'Status',            w:130, type:'dyn', dynKey:'status',  render:'status' },
   { k:'size',        label:'Size',              w:70,  type:'dyn', dynKey:'size' },
-  { k:'group',       label:'Group',             w:100, type:'dyn', dynKey:'group' },
-  { k:'category',    label:'Category',          w:150, type:'dyn', dynKey:'category' },
+  { k:'group',       label:'Group',             w:120, type:'dyn', dynKey:'group',    multi:true },
+  { k:'category',    label:'Category',          w:170, type:'dyn', dynKey:'category', multi:true },
   { k:'seller_type', label:'Seller type',       w:110, type:'dyn', dynKey:'seller_type', render:'seller_type' },
-  { k:'brand',       label:'Brand focus',       w:150, type:'dyn', dynKey:'brand' },
-  { k:'supply',      label:'Supply type',       w:120, type:'dyn', dynKey:'supply' },
-  { k:'shipping',    label:'Shipping type',     w:120, type:'dyn', dynKey:'shipping' },
+  { k:'brand',       label:'Brand focus',       w:180, type:'dyn', dynKey:'brand',    multi:true },
+  { k:'supply',      label:'Supply type',       w:140, type:'dyn', dynKey:'supply',   multi:true },
+  { k:'shipping',    label:'Shipping type',     w:140, type:'dyn', dynKey:'shipping', multi:true },
   { k:'line_group',  label:'Line Group name',   w:190 },
   { k:'remark',      label:'Remark',            w:160 },
 ];
@@ -1563,18 +1714,130 @@ function switchTab(name, el) {
 }
 
 /* ── chips ── */
-function statusChip(s) {
-  const m={VVIP:'chip-vvip',Active:'chip-active',Inactive:'chip-inactive',Churn:'chip-churn','Waiting listing':'chip-waiting',Pending:'chip-pending'};
-  return `<span class="chip ${m[s]||'chip-inactive'}">${s||'—'}</span>`;
+// Dynamic color assignment per option — stable across sessions
+const _chipColorCache = {};
+const CHIP_PALETTES = {
+  tier: v => {
+    const m = {'tier 1':'chip-t1','tier 2':'chip-t2','tier 3':'chip-t3','tier 4':'chip-t4','sasom employee':'chip-tse'};
+    return m[v?.toLowerCase()] || 'chip-t4';
+  },
+  status: v => {
+    const vl = (v||'').toLowerCase();
+    if(vl==='vvip') return 'chip-st-vvip';
+    if(vl==='active') return 'chip-st-active';
+    if(vl==='focus') return 'chip-st-focus';
+    if(vl.includes('unactive')||vl==='inactive') return 'chip-st-unactive';
+    if(vl.includes('waiting')) return 'chip-st-waiting';
+    if(vl==='churn') return 'chip-st-churn';
+    return 'chip-st-other';
+  },
+  size: v => { const m={s:'chip-sz-s',m:'chip-sz-m',l:'chip-sz-l',xl:'chip-sz-xl'}; return m[(v||'').toLowerCase()]||'chip-t4'; },
+  category: () => 'chip-cat',
+  brand:    () => 'chip-brand',
+  supply:   () => 'chip-supply',
+  shipping: () => 'chip-ship',
+  seller_type: v => { return v==='TH'?'chip-th':v==='INTER'?'chip-inter':'chip-t4'; },
+};
+
+function getChipCls(dynKey, val) {
+  if (!val) return 'chip-t4';
+  const fn = CHIP_PALETTES[dynKey];
+  if (fn) return fn(val);
+  // generic fallback — assign stable color from hash
+  const k = dynKey + ':' + val;
+  if (!_chipColorCache[k]) {
+    const pools = ['chip-cat','chip-brand','chip-supply','chip-ship','chip-t2','chip-t3'];
+    let h = 0; for (let i=0;i<k.length;i++) h = (h*31+k.charCodeAt(i))&0xffff;
+    _chipColorCache[k] = pools[h % pools.length];
+  }
+  return _chipColorCache[k];
 }
-function tierChip(t) {
-  const m={'tier 1':'chip-t1','tier 2':'chip-t2','tier 3':'chip-t3','tier 4':'chip-t4'};
-  return `<span class="chip ${m[t]||'chip-t4'}">${t?t.replace('tier ','T'):'—'}</span>`;
+
+function renderChips(dynKey, val) {
+  if (!val) return '<span class="c-val dim">—</span>';
+  const vals = Array.isArray(val) ? val : val.toString().split(',').map(v=>v.trim()).filter(Boolean);
+  if (!vals.length) return '<span class="c-val dim">—</span>';
+  return '<div class="chips-wrap">' + vals.map(v => {
+    const cls = getChipCls(dynKey, v);
+    let label = v;
+    // Abbreviations
+    if (dynKey==='tier') {
+      if (v.toLowerCase().startsWith('tier ')) label = 'T' + v.slice(5);
+      else if (v.toLowerCase()==='sasom employee') label = 'SE';
+    }
+    return `<span class="chip chip-dyn ${cls}">${label}</span>`;
+  }).join('') + '</div>';
 }
-function sellerTypeChip(v) {
-  const m={TH:'chip-th',INTER:'chip-inter'};
-  return `<span class="chip ${m[v]||'chip-inactive'}">${v||'—'}</span>`;
+
+function statusChip(s) { return renderChips('status', s); }
+function tierChip(t)   { return renderChips('tier', t); }
+function sellerTypeChip(v) { return renderChips('seller_type', v); }
+/* ── multi-select engine ── */
+let _multiDrop = { rowId:null, field:null };
+
+function openMultiDrop(e, rowId, field, anchorEl) {
+  e && e.stopPropagation();
+  _multiDrop = { rowId, field };
+  const r = vData.find(x=>x._id===rowId)||oData.find(x=>x._id===rowId)||xbData.find(x=>x._id===rowId);
+  const col = ALL_COLS_META.find(c=>c.k===field);
+  const opts = dynOpts[col?.dynKey||field] || [];
+  const cur  = getMultiVals(r, field);
+
+  document.getElementById('multiDropTitle').textContent = col?.label || field;
+  document.getElementById('multiDropOpts').innerHTML = opts.map(o => {
+    const on = cur.includes(o) ? 'on' : '';
+    return `<div class="multi-drop-opt ${on}" onclick="toggleMultiOpt('${o.replace(/'/g,"\\'")}',this)">
+      <span class="multi-drop-chk">✓</span><span>${o}</span>
+    </div>`;
+  }).join('');
+
+  const panel = document.getElementById('multiDrop');
+  panel.classList.add('open');
+  const rect = anchorEl.getBoundingClientRect();
+  let left = rect.left, top = rect.bottom + 4;
+  if (left + 220 > window.innerWidth) left = window.innerWidth - 228;
+  if (top + 300 > window.innerHeight) top = rect.top - 304;
+  panel.style.left = left + 'px'; panel.style.top = top + 'px';
 }
+
+function getMultiVals(r, field) {
+  if (!r) return [];
+  const v = r[field];
+  if (!v) return [];
+  if (Array.isArray(v)) return v;
+  return v.toString().split(',').map(x=>x.trim()).filter(Boolean);
+}
+
+function toggleMultiOpt(val, el) {
+  const r = vData.find(x=>x._id===_multiDrop.rowId)||oData.find(x=>x._id===_multiDrop.rowId)||xbData.find(x=>x._id===_multiDrop.rowId);
+  if (!r) return;
+  let cur = getMultiVals(r, _multiDrop.field);
+  if (cur.includes(val)) { cur = cur.filter(v=>v!==val); el.classList.remove('on'); }
+  else { cur.push(val); el.classList.add('on'); }
+  r[_multiDrop.field] = cur.join(',');
+  // update chip display in cell
+  const cell = document.querySelector(`.row[data-id="${_multiDrop.rowId}"] [data-col="${_multiDrop.field}"]`);
+  if (cell) cell.innerHTML = `<div class="chips-wrap" onclick="openMultiDrop(event,'${_multiDrop.rowId}','${_multiDrop.field}',this)" style="cursor:pointer;width:100%">${renderChips(_multiDrop.field, cur.join(','))}</div>`;
+}
+
+function clearMultiSel() {
+  const r = vData.find(x=>x._id===_multiDrop.rowId)||oData.find(x=>x._id===_multiDrop.rowId)||xbData.find(x=>x._id===_multiDrop.rowId);
+  if (r) r[_multiDrop.field] = '';
+  document.querySelectorAll('#multiDropOpts .multi-drop-opt').forEach(o=>o.classList.remove('on'));
+  const cell = document.querySelector(`.row[data-id="${_multiDrop.rowId}"] [data-col="${_multiDrop.field}"]`);
+  if (cell) cell.innerHTML = `<span class="c-val dim" onclick="openMultiDrop(event,'${_multiDrop.rowId}','${_multiDrop.field}',this)" style="cursor:pointer">—</span>`;
+}
+
+function closeMultiDrop() {
+  document.getElementById('multiDrop').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#multiDrop') && !e.target.closest('[data-multitrigger]')) {
+    closeMultiDrop();
+  }
+});
+
 function fmt(n) {
   if(!n||n===0) return '—';
   return (+n).toLocaleString('th-TH');
@@ -1730,6 +1993,131 @@ function makeMetricHC(s) {
     ${resizeHandle(s.key + '_tot')}
   </div>`;
 }
+
+// ── Multi-select helpers ──
+// Values stored as comma-separated string e.g. "TCG,Street"
+function msGetVals(r, k) {
+  const v = (r[k] || '').toString().trim();
+  return v ? v.split(',').map(x=>x.trim()).filter(Boolean) : [];
+}
+function msSetVals(id, k, vals) {
+  setF(id, k, vals.join(','));
+}
+
+// Render multi-select chip display (view mode)
+function msViewChips(vals) {
+  if (!vals.length) return `<span class="c-val dim">—</span>`;
+  return vals.map(v => `<span class="ms-chip">${esc(v)}</span>`).join(' ');
+}
+
+// Render multi-select edit widget
+function msEditWidget(id, k, vals, opts) {
+  const valsJson = esc(JSON.stringify(vals));
+  const optsJson = esc(JSON.stringify(opts));
+  const chips = vals.map(v =>
+    `<span class="ms-chip">${esc(v)}<button class="ms-chip-x" onclick="event.stopPropagation();msRemove('${id}','${k}','${esc(v)}')" tabindex="-1">×</button></span>`
+  ).join('');
+  const placeholder = vals.length ? '' : `<span class="ms-placeholder">เลือก…</span>`;
+  return `<div class="ms-wrap" id="ms-${id}-${k}" onclick="msOpenDrop(event,'${id}','${k}')">${chips}${placeholder}</div>`;
+}
+
+let _msDrop = null; // current open drop element
+
+function msOpenDrop(e, id, k) {
+  e.stopPropagation();
+  // Close existing
+  if (_msDrop) { _msDrop.remove(); _msDrop = null; }
+  const wrapEl = document.getElementById(`ms-${id}-${k}`);
+  if (!wrapEl) return;
+  wrapEl.classList.add('open');
+
+  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id) || xbData.find(x=>x._id===id);
+  const colMeta = ALL_COLS_META.find(c => c.k === k);
+  const opts = colMeta ? (dynOpts[colMeta.dynKey] || []) : [];
+  const current = msGetVals(r, k);
+
+  const drop = document.createElement('div');
+  drop.className = 'ms-drop open';
+  drop.id = `msdrop-${id}-${k}`;
+  drop.innerHTML = `
+    <input class="ms-drop-search" placeholder="Search…" oninput="msFilterDrop(this)" onclick="event.stopPropagation()">
+    ${opts.map(o => {
+      const on = current.includes(o) ? 'on' : '';
+      return `<div class="ms-drop-opt ${on}" onclick="event.stopPropagation();msToggleOpt('${id}','${k}','${esc(o)}',this)">
+        <span class="ms-drop-chk">✓</span><span>${esc(o)}</span>
+      </div>`;
+    }).join('')}`;
+
+  document.body.appendChild(drop);
+  _msDrop = drop;
+
+  const rect = wrapEl.getBoundingClientRect();
+  drop.style.left = Math.min(rect.left, window.innerWidth - 250) + 'px';
+  drop.style.top  = (rect.bottom + 2) + 'px';
+  drop.style.minWidth = Math.max(160, rect.width) + 'px';
+
+  setTimeout(() => drop.querySelector('.ms-drop-search').focus(), 30);
+}
+
+function msFilterDrop(input) {
+  const q = input.value.toLowerCase();
+  input.closest('.ms-drop').querySelectorAll('.ms-drop-opt').forEach(o => {
+    o.style.display = o.querySelector('span:last-child').textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function msToggleOpt(id, k, val, optEl) {
+  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id) || xbData.find(x=>x._id===id);
+  if (!r) return;
+  let vals = msGetVals(r, k);
+  if (vals.includes(val)) {
+    vals = vals.filter(v => v !== val);
+    optEl.classList.remove('on');
+  } else {
+    vals.push(val);
+    optEl.classList.add('on');
+  }
+  msSetVals(id, k, vals);
+  // Update wrap chips live
+  const wrapEl = document.getElementById(`ms-${id}-${k}`);
+  if (wrapEl) {
+    const chips = vals.map(v =>
+      `<span class="ms-chip">${esc(v)}<button class="ms-chip-x" onclick="event.stopPropagation();msRemove('${id}','${k}','${esc(v)}')" tabindex="-1">×</button></span>`
+    ).join('');
+    wrapEl.innerHTML = chips || `<span class="ms-placeholder">เลือก…</span>`;
+  }
+}
+
+function msRemove(id, k, val) {
+  const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id) || xbData.find(x=>x._id===id);
+  if (!r) return;
+  const vals = msGetVals(r, k).filter(v => v !== val);
+  msSetVals(id, k, vals);
+  // Refresh the wrap
+  const wrapEl = document.getElementById(`ms-${id}-${k}`);
+  if (wrapEl) {
+    const chips = vals.map(v =>
+      `<span class="ms-chip">${esc(v)}<button class="ms-chip-x" onclick="event.stopPropagation();msRemove('${id}','${k}','${esc(v)}')" tabindex="-1">×</button></span>`
+    ).join('');
+    wrapEl.innerHTML = chips || `<span class="ms-placeholder">เลือก…</span>`;
+  }
+  // Update the open drop if still open
+  const drop = document.getElementById(`msdrop-${id}-${k}`);
+  if (drop) {
+    drop.querySelectorAll('.ms-drop-opt').forEach(o => {
+      const txt = o.querySelector('span:last-child').textContent;
+      o.classList.toggle('on', vals.includes(txt));
+    });
+  }
+}
+
+// Close ms drop on outside click
+document.addEventListener('click', e => {
+  if (_msDrop && !e.target.closest('.ms-drop') && !e.target.closest('.ms-wrap')) {
+    _msDrop.remove(); _msDrop = null;
+    document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  }
+});
 
 /* ── render ── */
 function makeHC(c, w) {
@@ -2025,6 +2413,9 @@ function render() {
           rows += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
           c.opts.forEach(o=>rows+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
           rows += `</select>`;
+        } else if(c.type==='dyn' && c.multi) {
+          // Multi-select: show chips, click to open picker
+          rows += `<div class="chips-wrap" onclick="openMultiDrop(event,'${r._id}','${c.k}',this)" style="cursor:pointer;width:100%">${renderChips(c.dynKey||c.k, r[c.k])}</div>`;
         } else if(c.type==='dyn') {
           const cellOpts = dynOpts[c.dynKey] || [];
           rows += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
@@ -2037,6 +2428,8 @@ function render() {
         if(c.render==='status')           rows += statusChip(r[c.k]);
         else if(c.render==='tier')        rows += tierChip(r[c.k]);
         else if(c.render==='seller_type') rows += sellerTypeChip(r[c.k]);
+        else if(c.type==='dyn' && c.multi) rows += renderChips(c.dynKey||c.k, r[c.k]);
+        else if(c.type==='dyn')           rows += renderChips(c.dynKey||c.k, r[c.k]);
         else rows += `<span class="c-val ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
       }
       rows += `</div>`;
@@ -2322,11 +2715,55 @@ function openMgrPanel(key, e) {
 function closeMgrPanel() { document.getElementById('mgrPanel').classList.remove('open'); mgrKey = null; }
 function renderMgrList() {
   const opts = dynOpts[mgrKey] || [];
-  document.getElementById('mgrList').innerHTML = opts.map((o,i)=>`
-    <div class="mgr-item">
+  const listEl = document.getElementById('mgrList');
+  listEl.innerHTML = opts.map((o,i)=>`
+    <div class="mgr-item" data-idx="${i}">
+      <span class="mgr-drag-handle" onmousedown="startMgrDrag(event,${i})">
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="none"><circle cx="3" cy="2" r="1.1" fill="currentColor"/><circle cx="7" cy="2" r="1.1" fill="currentColor"/><circle cx="3" cy="6" r="1.1" fill="currentColor"/><circle cx="7" cy="6" r="1.1" fill="currentColor"/><circle cx="3" cy="10" r="1.1" fill="currentColor"/><circle cx="7" cy="10" r="1.1" fill="currentColor"/></svg>
+      </span>
       <span>${o}</span>
       <button class="mgr-del" onclick="deleteMgrItem(${i})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('') || '<div style="padding:10px 14px;font-size:11px;color:var(--ink4)">No items yet</div>';
+}
+
+/* drag-to-reorder in mgr panel */
+let _mgrDrag = null;
+function startMgrDrag(e, idx) {
+  e.preventDefault(); e.stopPropagation();
+  const items = () => [...document.querySelectorAll('#mgrList .mgr-item[data-idx]')];
+  const srcEl = items().find(el => +el.dataset.idx === idx);
+  if (!srcEl) return;
+  _mgrDrag = { idx, srcEl, overEl:null, pos:null };
+  srcEl.classList.add('mgr-drag-src');
+  document.body.classList.add('row-dragging');
+
+  function clearInd() { document.querySelectorAll('.mgr-drag-above,.mgr-drag-below').forEach(el=>el.classList.remove('mgr-drag-above','mgr-drag-below')); }
+
+  function onMove(ev) {
+    clearInd();
+    const hit = items().find(el => { if(el===srcEl) return false; const r=el.getBoundingClientRect(); return ev.clientY>=r.top&&ev.clientY<=r.bottom; });
+    if (hit) {
+      const r=hit.getBoundingClientRect();
+      const pos = ev.clientY < r.top+r.height/2 ? 'above' : 'below';
+      hit.classList.add(pos==='above'?'mgr-drag-above':'mgr-drag-below');
+      _mgrDrag.overEl=hit; _mgrDrag.pos=pos;
+    } else { _mgrDrag.overEl=null; _mgrDrag.pos=null; }
+  }
+  function onUp() {
+    clearInd(); srcEl.classList.remove('mgr-drag-src'); document.body.classList.remove('row-dragging');
+    document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp);
+    if (_mgrDrag?.overEl && _mgrDrag?.pos) {
+      const arr = dynOpts[mgrKey];
+      const tgtIdx = +_mgrDrag.overEl.dataset.idx;
+      const [moved] = arr.splice(idx,1);
+      const newTgt = arr.findIndex((_,i)=> i === (idx<tgtIdx ? tgtIdx-1 : tgtIdx));
+      const insertAt = _mgrDrag.pos==='above' ? (idx<tgtIdx?tgtIdx-1:tgtIdx) : (idx<tgtIdx?tgtIdx:tgtIdx+1);
+      arr.splice(Math.max(0,Math.min(arr.length,insertAt)),0,moved);
+      saveDyn(mgrKey); renderMgrList(); render();
+    }
+    _mgrDrag=null;
+  }
+  document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
 }
 function addMgrItem() {
   const inp = document.getElementById('mgrInput');
