@@ -1269,10 +1269,32 @@ function clearRangeFilter() {
   closeRangeDrop();
 }
 
-// Check if a row passes range filters
+// ── getSortVal: decode all metric sort keys ──
+// Handles: _gmv_tot, _gmv_Q1, _gmv_Jan, _orders_Q2, _failed_Mar, etc.
+function getSortVal(r, key) {
+  if (!key || !key.startsWith('_')) return 0;
+  const METRIC_KEYS = ['gmv','orders','listing','failed'];
+  const inner = key.slice(1); // remove leading '_'
+  // Check for _<metric>_tot
+  for (const mk of METRIC_KEYS) {
+    if (inner === mk + '_tot') {
+      return Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
+    }
+    if (inner.startsWith(mk + '_')) {
+      const period = inner.slice(mk.length + 1); // 'Q1' or 'Jan'
+      if (QUARTERS[period]) {
+        return QUARTERS[period].reduce((a,m)=>a+((r[mk]||{})[m]||0), 0);
+      }
+      return (r[mk]||{})[period] || 0;
+    }
+  }
+  return 0;
+}
+
+// Check if a row passes range filters — uses getSortVal so Q/month keys work too
 function passesRangeFilters(r) {
   for (const [key, range] of Object.entries(activeRangeFilters)) {
-    const val = getMetricTot(r, key);
+    const val = getSortVal(r, key);
     if (range.min !== null && val < range.min) return false;
     if (range.max !== null && val > range.max) return false;
   }
@@ -1624,22 +1646,17 @@ function render() {
     return true;
   });
 
-  // ── Sort: support both regular keys and metric totals ──
+  // ── Sort ──
   if (sortKey) {
     filtered = [...filtered].sort((a, b) => {
-      let va, vb;
-      // Check if sorting by metric total
-      if (sortKey.startsWith('_') && sortKey.endsWith('_tot')) {
-        va = getMetricTot(a, sortKey);
-        vb = getMetricTot(b, sortKey);
-        return (va - vb) * sortDir;
-      } else {
-        va = (a[sortKey] || '').toString().toLowerCase();
-        vb = (b[sortKey] || '').toString().toLowerCase();
-        const na = parseFloat(va), nb = parseFloat(vb);
-        if (!isNaN(na) && !isNaN(nb)) return (na - nb) * sortDir;
-        return va < vb ? -sortDir : va > vb ? sortDir : 0;
+      if (sortKey.startsWith('_')) {
+        return (getSortVal(a, sortKey) - getSortVal(b, sortKey)) * sortDir;
       }
+      const va = (a[sortKey] || '').toString().toLowerCase();
+      const vb = (b[sortKey] || '').toString().toLowerCase();
+      const na = parseFloat(va), nb = parseFloat(vb);
+      if (!isNaN(na) && !isNaN(nb)) return (na - nb) * sortDir;
+      return va < vb ? -sortDir : va > vb ? sortDir : 0;
     });
   }
 
@@ -1662,30 +1679,36 @@ function render() {
   MONTHLY_SECS.forEach(s => {
     sh += makeMetricHC(s);
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
-      // Q sub-header: sortable by Q total
-      const qSortKey = `_${s.key}_${qLabel}`;
-      const isQSort  = sortKey === qSortKey;
-      const qSortCls = isQSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
-      const qArrow   = isQSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+      const qSortKey   = `_${s.key}_${qLabel}`;
+      const isQSort    = sortKey === qSortKey;
+      const qSortCls   = isQSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+      const qArrow     = isQSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+      const qHasFilter = !!activeRangeFilters[qSortKey];
       sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px">
         <div class="hc-inner">
           <span class="hc-label">${qLabel}</span>
           <span class="hc-icons">
             <button class="hc-sort-btn ${qSortCls}" onclick="sortBy('${qSortKey}')" title="Sort by ${qLabel}">${qArrow}</button>
+            <button class="hc-filter-btn ${qHasFilter?'active':''}" onclick="openRangeDrop(event,'${qSortKey}','${s.label} ${qLabel}','${s.cls}')" title="Filter ${qLabel}">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            </button>
           </span>
         </div>
       </div>`;
       qMonths.forEach(m => {
-        // Month sub-header: sortable by individual month
-        const mSortKey = `_${s.key}_${m}`;
-        const isMSort  = sortKey === mSortKey;
-        const mSortCls = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
-        const mArrow   = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
-        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px;padding:0 4px">
+        const mSortKey   = `_${s.key}_${m}`;
+        const isMSort    = sortKey === mSortKey;
+        const mSortCls   = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+        const mArrow     = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+        const mHasFilter = !!activeRangeFilters[mSortKey];
+        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px;padding:0 2px">
           <div class="hc-inner">
             <span class="hc-label">${m}</span>
             <span class="hc-icons">
               <button class="hc-sort-btn ${mSortCls}" onclick="sortBy('${mSortKey}')" title="Sort by ${m}">${mArrow}</button>
+              <button class="hc-filter-btn ${mHasFilter?'active':''}" onclick="openRangeDrop(event,'${mSortKey}','${s.label} ${m}','${s.cls}')" title="Filter ${m}">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              </button>
             </span>
           </div>
         </div>`;
@@ -1821,30 +1844,6 @@ function render() {
   document.getElementById('addRowBtn').disabled = !canEdit;
   updateStats();
 }
-
-// Sort by Q total or month total
-// Extended sortKey support: _gmv_Q1, _gmv_Jan, _orders_Q2, etc.
-function getSortVal(r, key) {
-  if (!key || !key.startsWith('_')) return (r[key]||'').toString().toLowerCase();
-  if (key.endsWith('_tot')) {
-    const mk = key.slice(1, -4); // '_gmv_tot' -> 'gmv'
-    return Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
-  }
-  // _gmv_Q1 or _gmv_Jan
-  const parts = key.slice(1).split('_'); // 'gmv_Q1' -> ['gmv','Q1'] or 'gmv_Jan'
-  if (parts.length < 2) return 0;
-  const mk = parts[0];
-  const period = parts.slice(1).join('_');
-  if (QUARTERS[period]) {
-    return QUARTERS[period].reduce((a,m)=>a+((r[mk]||{})[m]||0), 0);
-  }
-  return (r[mk]||{})[period] || 0;
-}
-
-function render_patched() {} // no-op, patched below
-
-// Patch sort into filtered list via overriding the sort section
-// (already handled inline in render() above via getSortVal)
 
 function syncScroll(el) {
   document.getElementById('frozenBody').scrollTop = el.scrollTop;
