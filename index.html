@@ -1154,22 +1154,27 @@ function setM(id,mk,m,v) {
 }
 function askDel(id) {
   if(!canEdit) { showLock(); return; }
-  delId=id;
-  const r=getData().find(x=>x._id===id);
+  delId = id;
+  const modal = document.getElementById('delModal');
+  modal.dataset.pendingId = id; // store in DOM — survives any JS re-render
+  const r = getData().find(x=>x._id===id);
   document.getElementById('delName').textContent=(r&&(r.shop||r.email))||'this seller';
-  document.getElementById('delModal').classList.add('open');
+  modal.classList.add('open');
 }
 function closeMdl(){
   document.getElementById('delModal').classList.remove('open');
-  // delId is reset AFTER confirmDel captures it (see confirmDel)
-  setTimeout(() => { delId = null; }, 0);
+  delId = null;
 }
 function confirmDel(){
-  if(!delId) return;
-  const idToDelete = delId; // capture before closeMdl resets it
-  closeMdl();
+  // Read delId from DOM data attribute — immune to async reset
+  const modal = document.getElementById('delModal');
+  const idToDelete = modal.dataset.pendingId;
+  if(!idToDelete) return;
+  modal.dataset.pendingId = '';
+  document.getElementById('delModal').classList.remove('open');
   if(tab==='vendor') vData=vData.filter(x=>x._id!==idToDelete);
   else oData=oData.filter(x=>x._id!==idToDelete);
+  delId = null;
   persist(); render(); syncSheet(); toast('Removed');
 }
 function switchTab(name, el) {
