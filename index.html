@@ -2208,6 +2208,8 @@ function updateStats() {
 
 /* ── sync ── */
 let _lastSyncHash = '';
+let _syncCooldownTimer = null;
+
 async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) return;
@@ -2216,12 +2218,28 @@ async function syncSheet(force) {
   if (!force && hash === _lastSyncHash) return;
   _lastSyncHash = hash;
   toast('Syncing…');
+
+  // Pause real-time polling while syncing + cooldown
+  // to prevent Sheet pulling back stale data before Apps Script finishes saving
+  stopRealtime();
+  clearTimeout(_syncCooldownTimer);
+
   try {
     const res = await fetch(url, { method:'POST', body:JSON.stringify({action:'syncAll',vendor:vData,onboard:oData,offboard:xbData}), headers:{'Content-Type':'text/plain'} });
     const j = await res.json();
-    if(j.status==='success') { document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH'); toast('Synced to Google Sheet','ok'); }
-    else toast('Sync error','err');
-  } catch { toast('Cannot reach Apps Script','err'); }
+    if(j.status==='success') {
+      document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
+      toast('Synced to Google Sheet','ok');
+      // Wait 8s for Apps Script to finish writing before resuming poll
+      _syncCooldownTimer = setTimeout(() => startRealtime(), 8000);
+    } else {
+      toast('Sync error','err');
+      startRealtime();
+    }
+  } catch {
+    toast('Cannot reach Apps Script','err');
+    startRealtime();
+  }
 }
 
 let _pullTimer = null;
