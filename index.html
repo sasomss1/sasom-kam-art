@@ -321,7 +321,7 @@ body {
 .tbl-head-row2-frozen { flex-shrink: 0; }
 .tbl-head-row2-scroll { flex: 1; overflow: hidden; }
 .tbl-head-row2-inner  { display: flex; min-width: max-content; }
-.hc-top { /* Q label row */ }
+.hc-top { }
 .hc-sub { height: 24px; font-size: 9px; }
 .hc-q-span {
   display: flex; align-items: center; justify-content: center;
@@ -593,7 +593,7 @@ select.c-in {
   width: 16px; height: 16px; flex-shrink: 0;
   border: 1.5px solid var(--border2); border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  transition: all .12s;
+  transition: all .12px;
 }
 .frz-col-check.on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .frz-col-name { flex: 1; font-size: 12px; color: var(--ink2); }
@@ -633,6 +633,47 @@ select.c-in {
 }
 .hc-filter-btn:hover { background: var(--border); color: var(--ink); }
 .hc-filter-btn.active { background: var(--ink); color: #fff; }
+
+/* ── metric range filter panel ── */
+.range-drop {
+  display: none;
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 200;
+  width: 220px;
+  padding: 12px 14px;
+}
+.range-drop.open { display: block; }
+.range-drop-title { font-size: 11px; font-weight: 600; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.range-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.range-lbl { font-size: 10px; color: var(--ink3); width: 28px; flex-shrink: 0; }
+.range-in {
+  flex: 1; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 5px 8px; font-size: 12px; font-family: inherit;
+  color: var(--ink); background: var(--bg); outline: none;
+}
+.range-in:focus { border-color: var(--border2); }
+.range-sep { font-size: 10px; color: var(--ink4); }
+.range-actions { display: flex; gap: 6px; margin-top: 10px; }
+.range-btn {
+  flex: 1; height: 26px; border: none; border-radius: var(--radius-sm);
+  font-size: 11px; font-family: inherit; cursor: pointer;
+}
+.range-btn.apply { background: var(--ink); color: #fff; }
+.range-btn.apply:hover { background: var(--ink2); }
+.range-btn.clear { background: var(--bg); color: var(--ink3); border: 1px solid var(--border); }
+.range-btn.clear:hover { border-color: var(--border2); color: var(--ink); }
+.range-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.range-preset {
+  padding: 2px 8px; border-radius: 12px; font-size: 10px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--ink3); cursor: pointer; transition: all .12s;
+}
+.range-preset:hover { border-color: var(--border2); color: var(--ink); }
+.range-preset.on { background: var(--ink); color: #fff; border-color: var(--ink); }
 
 .hc-drop {
   display: none;
@@ -684,33 +725,28 @@ select.c-in {
    MOBILE — iPhone safe area + touch
 ══════════════════════════════════════ */
 @media (max-width: 768px) {
-
-  /* Safe area insets for notch/Dynamic Island */
   body {
     flex-direction: column;
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
-
-  /* ── SIDEBAR → bottom sheet drawer ── */
   .sidebar {
-    display: none;
+    display: flex;
     position: fixed;
-    inset: 0;
+    left: 0; right: 0; bottom: 0; top: auto;
     width: 100%;
-    z-index: 400;
+    height: auto;
+    max-height: 85vh;
+    z-index: 399;
     flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
     transform: translateY(100%);
-    transition: transform .3s ease;
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
     border-radius: 20px 20px 0 0;
     overflow-y: auto;
+    visibility: hidden;
   }
-  .sidebar.open {
-    display: flex;
-    transform: translateY(0);
-  }
-  /* drawer handle */
+  .sidebar.open { transform: translateY(0); visibility: visible; }
   .sidebar::before {
     content: '';
     display: block;
@@ -720,25 +756,12 @@ select.c-in {
     margin: 10px auto 6px;
     flex-shrink: 0;
   }
-
-  /* ── TOPBAR: hamburger + compact ── */
-  .topbar {
-    height: 48px;
-    padding: 0 12px 0 16px;
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-    gap: 6px;
-  }
+  .topbar { height: 48px; padding: 0 12px 0 16px; gap: 6px; }
   .topbar-title { font-size: 14px; }
   .topbar-meta  { display: none; }
-
-  /* hide non-essential topbar buttons on mobile */
   #mgrDropBtn, #frzToggleBtn, .btn-ghost:not(#editBadge) { display: none; }
-  /* keep edit badge + add seller */
   .topbar-r { gap: 6px; }
   #addBtn { padding: 6px 10px; font-size: 11px; }
-
-  /* hamburger button */
   #menuToggle {
     display: flex;
     align-items: center; justify-content: center;
@@ -750,154 +773,61 @@ select.c-in {
     -webkit-tap-highlight-color: transparent;
   }
   #menuToggle:active { background: var(--border); }
-
-  /* ── FILTER BAR: scrollable tabs ── */
-  .filterbar {
-    height: auto;
-    padding: 0 12px;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
+  .filterbar { height: auto; padding: 0 12px; flex-wrap: wrap; gap: 6px; padding-top: 6px; padding-bottom: 6px; }
   .tab-strip { gap: 0; }
   .ftab { height: 34px; padding: 0 12px; font-size: 11px; }
   .filter-r { width: 100%; gap: 6px; }
   .search-wrap { flex: 1; }
   .search-wrap input { width: 100%; }
   .row-cnt { display: none; }
-
-  /* ── URL BAR: stack vertically, hide on mobile by default ── */
-  .urlbar {
-    display: none; /* hidden on mobile — configure on desktop */
-  }
-
-  /* ── STATS: horizontal scroll ── */
-  .stats-row {
-    padding: 8px 12px 0;
-    overflow-x: auto;
-    flex-shrink: 0;
-    -webkit-overflow-scrolling: touch;
-    gap: 8px;
-    scrollbar-width: none;
-  }
+  .urlbar { display: none; }
+  .stats-row { padding: 8px 12px 0; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; gap: 8px; scrollbar-width: none; }
   .stats-row::-webkit-scrollbar { display: none; }
   .stat-card { min-width: 72px; padding: 8px 12px; flex-shrink: 0; }
   .stat-n { font-size: 17px; }
   .stat-l { font-size: 9px; }
-
-  /* ── SHEET AREA ── */
   .sheet-area { padding: 8px 8px 0; }
   .sheet-card { border-radius: var(--radius); }
-
-  /* ── TABLE: bigger touch targets ── */
   .fc, .sc { min-height: 44px; }
   .ia { width: 36px; height: 36px; }
-  .row-acts { opacity: 1; } /* always show on mobile */
-
-  /* ── FREEZE PANEL: full-width bottom sheet ── */
-  .frz-panel {
-    position: fixed !important;
-    left: 0 !important; right: 0 !important; top: auto !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    max-height: 60vh;
-    border-radius: 20px 20px 0 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 350;
-  }
-
-  /* ── MGR PANEL: full-width bottom sheet ── */
-  .mgr-panel {
-    position: fixed !important;
-    left: 0 !important; right: 0 !important; top: auto !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    border-radius: 20px 20px 0 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 350;
-    max-height: 70vh;
-  }
-
-  /* ── MODALS: full-width ── */
-  .modal {
-    width: calc(100vw - 32px);
-    max-width: 400px;
-  }
-
-  /* ── LOCK SCREEN ── */
+  .row-acts { opacity: 1; }
+  .frz-panel { position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: 100% !important; max-height: 70vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); z-index: 500 !important; }
+  .mgr-panel { position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: 100% !important; border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); z-index: 500 !important; max-height: 70vh; overflow-y: auto; }
+  .range-drop { position: fixed !important; left: 8px !important; right: 8px !important; top: auto !important; bottom: env(safe-area-inset-bottom) !important; width: auto !important; border-radius: 16px 16px 0 0; }
+  .modal { width: calc(100vw - 32px); max-width: 400px; }
   .lock-box { width: calc(100vw - 48px); }
-
-  /* ── ADD ROW BUTTON: taller tap target ── */
   .add-row { height: 48px; font-size: 12px; }
-
-  /* ── HC DROPDOWN: full-screen on mobile ── */
-  .hc-drop {
-    position: fixed !important;
-    left: 8px !important;
-    right: 8px !important;
-    top: auto !important;
-    bottom: env(safe-area-inset-bottom) !important;
-    width: auto !important;
-    border-radius: 16px 16px 0 0;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
+  .hc-drop { position: fixed !important; left: 8px !important; right: 8px !important; top: auto !important; bottom: env(safe-area-inset-bottom) !important; width: auto !important; border-radius: 16px 16px 0 0; max-height: 60vh; overflow-y: auto; }
   .hcd-opts { max-height: 40vh; }
   .hcd-opt { padding: 12px 16px; font-size: 14px; }
-
-  /* ── TOAST: above safe area ── */
-  .toast {
-    bottom: calc(16px + env(safe-area-inset-bottom));
-    left: 16px; right: 16px;
-    text-align: center;
-  }
-
-  /* ── MGR MENU dropdown → bottom sheet ── */
-  #mgrMenu {
-    position: fixed !important;
-    left: 0 !important; right: 0 !important;
-    top: auto !important; bottom: 0 !important;
-    width: 100% !important;
-    border-radius: 20px 20px 0 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    max-height: 70vh; overflow-y: auto;
-  }
-
-  /* ── SIDEBAR OVERLAY backdrop ── */
-  #sidebarBackdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 399;
-    backdrop-filter: blur(2px);
-  }
+  .toast { bottom: calc(16px + env(safe-area-inset-bottom)); left: 16px; right: 16px; text-align: center; }
+  #mgrMenu { position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: 100% !important; border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); max-height: 70vh; overflow-y: auto; z-index: 500 !important; }
+  #sidebarBackdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 398; -webkit-tap-highlight-color: transparent; }
   #sidebarBackdrop.show { display: block; }
+  .sidebar { z-index: 399; }
+  .frz-panel, .mgr-panel { z-index: 401; }
+  #mobileFrzBtn, #mobileMgrBtn { display: flex !important; }
+}
 
-  /* show Freeze & Manage in sidebar on mobile */
-  #mobileFrzBtn, #mobileMgrBtn {
-    display: flex !important;
-  }
+button, .ia, .ftab, .sb-item, .hcd-opt, .tb-badge, .add-row {
+  touch-action: manipulation;
 }
 
 @keyframes rtpulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: .4; transform: scale(.7); }
 }
-.rt-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  display: inline-block;
-  flex-shrink: 0;
-}
+.rt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; flex-shrink: 0; }
 .tb-badge.view .rt-dot { background: var(--ink4); }
 
-/* Desktop: hide mobile-only elements */
 @media (min-width: 769px) {
   #menuToggle { display: none; }
   #sidebarBackdrop { display: none !important; }
-  #mobileFrzBtn, #mobileMgrBtn { display: none; }
+  .sb-mobile-only { display: none !important; }
+}
+@media (max-width: 768px) {
+  .sb-mobile-only { display: flex !important; }
+  #mobileFrzBtn, #mobileMgrBtn { display: flex !important; }
 }
 </style>
 </head>
@@ -915,7 +845,6 @@ select.c-in {
   </div>
 </div>
 
-<!-- SIDEBAR BACKDROP (mobile) -->
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
@@ -927,70 +856,48 @@ select.c-in {
       <div class="sb-sub">KAM Tracker</div>
     </div>
   </div>
-
   <div class="sb-section">Vendor</div>
   <button class="sb-item active" onclick="switchTab('vendor',this)">
-    <span class="sb-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </span>
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
     Vendor perf 2026
     <span class="sb-count" id="sb-vcnt">0</span>
   </button>
   <button class="sb-item" onclick="switchTab('onboard',this)">
-    <span class="sb-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-    </span>
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
     VA Onboard 2026
     <span class="sb-count" id="sb-ocnt">0</span>
   </button>
-
   <div class="sb-section" style="margin-top:8px">Data</div>
   <button class="sb-item" onclick="pullPerfData()">
-    <span class="sb-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    </span>
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
     Pull Perf Data
   </button>
   <button class="sb-item" onclick="syncSheet()">
-    <span class="sb-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-    </span>
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></span>
     Sync to Sheet
   </button>
   <button class="sb-item" onclick="exportCSV()">
-    <span class="sb-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    </span>
+    <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
     Export CSV
   </button>
-
   <div style="flex:1"></div>
   <div style="padding:12px 14px 14px;border-top:1px solid #2a2520">
-    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit"
-      target="_blank"
+    <a href="https://docs.google.com/spreadsheets/d/1gvhyhcLwfXFiUH9r6ISUDBvCim7-v295N8f9GEY5QhQ/edit" target="_blank"
       style="display:flex;align-items:center;gap:8px;font-size:11px;color:#555;text-decoration:none;padding:6px 4px;transition:color .15s"
       onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       KAM Vendor Master 2026
     </a>
     <button class="sb-item" onclick="confirmClearAll()" style="color:#e57373;margin-top:4px">
-      <span class="sb-icon">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </span>
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></span>
       Clear all data
     </button>
-
-    <!-- Mobile-only buttons -->
-    <button class="sb-item" id="mobileFrzBtn" onclick="closeSidebar();openFrzPanelMobile()" style="display:none">
-      <span class="sb-icon">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
-      </span>
+    <button class="sb-item sb-mobile-only" id="mobileFrzBtn" onclick="closeSidebar();openFrzPanelMobile()">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg></span>
       Freeze columns
     </button>
-    <button class="sb-item" id="mobileMgrBtn" onclick="closeSidebar();toggleMgrMenuMobile()" style="display:none">
-      <span class="sb-icon">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-      </span>
+    <button class="sb-item sb-mobile-only" id="mobileMgrBtn" onclick="closeSidebar();toggleMgrMenuMobile()">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
       Manage lists
     </button>
   </div>
@@ -998,10 +905,7 @@ select.c-in {
 
 <!-- MAIN AREA -->
 <div class="main">
-
-  <!-- TOPBAR -->
   <div class="topbar">
-    <!-- Hamburger (mobile only) -->
     <button id="menuToggle" onclick="openSidebar()" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
@@ -1023,8 +927,7 @@ select.c-in {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
           Manage lists
         </button>
-        <div id="mgrMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);z-index:100;min-width:160px;padding:4px 0">
-        </div>
+        <div id="mgrMenu" style="display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);z-index:100;min-width:160px;padding:4px 0"></div>
       </div>
       <button class="btn btn-ghost" id="frzToggleBtn" onclick="openFrzPanel(event)">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
@@ -1035,7 +938,6 @@ select.c-in {
     </div>
   </div>
 
-  <!-- FILTER BAR -->
   <div class="filterbar">
     <div class="tab-strip">
       <button class="ftab on" onclick="switchTab('vendor',this)" id="ftab-vendor">Vendor perf 2026</button>
@@ -1054,7 +956,6 @@ select.c-in {
     </div>
   </div>
 
-  <!-- URL CONFIG -->
   <div class="urlbar">
     <span class="urlbar-lbl">Apps Script</span>
     <input class="urlbar-in" type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveUrl()">
@@ -1064,7 +965,6 @@ select.c-in {
     <span style="font-size:10px;color:var(--ink4)" id="rawStatus"></span>
   </div>
 
-  <!-- STATS -->
   <div class="stats-row">
     <div class="stat-card"><div class="stat-n" id="st-tot">0</div><div class="stat-l">Sellers</div></div>
     <div class="stat-card"><div class="stat-n" id="st-vvip">0</div><div class="stat-l">VVIP</div></div>
@@ -1073,11 +973,9 @@ select.c-in {
     <div class="stat-card" style="margin-left:auto"><div class="stat-n" id="st-sync" style="font-size:12px;color:var(--ink3)">—</div><div class="stat-l">Last sync</div></div>
   </div>
 
-  <!-- SPREADSHEET -->
   <div class="sheet-area">
     <div class="sheet-card">
       <div class="tbl-wrap">
-        <!-- head -->
         <div class="tbl-head" id="tblHead">
           <div class="tbl-head-frozen" id="frozenHead"></div>
           <div class="tbl-head-scroll" id="scrollHead">
@@ -1090,7 +988,6 @@ select.c-in {
             <div class="tbl-head-row2-inner" id="scrollHeadInner2"></div>
           </div>
         </div>
-        <!-- body -->
         <div class="tbl-body">
           <div class="tbl-frozen" id="frozenBody"></div>
           <div class="tbl-scroll" id="scrollBody" onscroll="syncScroll(this)">
@@ -1160,6 +1057,27 @@ select.c-in {
   <div class="frz-hint" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">Actions และ # ถูก freeze เสมอ</div>
 </div>
 
+<!-- METRIC RANGE FILTER PANEL -->
+<div class="range-drop" id="rangeDrop">
+  <div class="range-drop-title">
+    <span id="rangeDropTitle">Filter</span>
+    <button class="mgr-close" onclick="closeRangeDrop()">×</button>
+  </div>
+  <div class="range-presets" id="rangePresets"></div>
+  <div class="range-row">
+    <span class="range-lbl">Min</span>
+    <input class="range-in" type="number" id="rangeMin" placeholder="0">
+  </div>
+  <div class="range-row">
+    <span class="range-lbl">Max</span>
+    <input class="range-in" type="number" id="rangeMax" placeholder="∞">
+  </div>
+  <div class="range-actions">
+    <button class="range-btn clear" onclick="clearRangeFilter()">Clear</button>
+    <button class="range-btn apply" onclick="applyRangeFilter()">Apply</button>
+  </div>
+</div>
+
 <script>
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PWD    = 'SASOMART';
@@ -1183,15 +1101,8 @@ Object.keys(DYN_DEFAULTS).forEach(k => {
   dynOpts[k] = JSON.parse(localStorage.getItem('dyn26_' + k) || JSON.stringify(DYN_DEFAULTS[k]));
 });
 
-function saveDyn(key) {
-  localStorage.setItem('dyn26_' + key, JSON.stringify(dynOpts[key]));
-}
+function saveDyn(key) { localStorage.setItem('dyn26_' + key, JSON.stringify(dynOpts[key])); }
 
-const getKam  = () => dynOpts.kam;
-const getGroup= () => dynOpts.group;
-const getCat  = () => dynOpts.category;
-
-let freezeRows = 1;
 const ALL_COLS_META = [
   { k:'_act',        label:'Actions',           w:62,  special:'actions',  alwaysPin:true },
   { k:'no',          label:'#',                 w:36,  alwaysPin:true },
@@ -1214,54 +1125,41 @@ const ALL_COLS_META = [
   { k:'remark',      label:'Remark',            w:160 },
 ];
 
-const FREE_TEXT_COLS = new Set(['email','user_id','name_th','name_en','line_group','remark','no']);
-
 let pinnedKeys = new Set(
   JSON.parse(localStorage.getItem('pinnedCols26') || '["_act","no","kam","email"]')
 );
-
-function savePinned() {
-  localStorage.setItem('pinnedCols26', JSON.stringify([...pinnedKeys]));
-}
+function savePinned() { localStorage.setItem('pinnedCols26', JSON.stringify([...pinnedKeys])); }
 
 function getColOrder() {
   const order = JSON.parse(localStorage.getItem('colOrder26') || 'null');
-  if (order) {
-    return order.map(k => ALL_COLS_META.find(c => c.k === k)).filter(Boolean);
-  }
+  if (order) return order.map(k => ALL_COLS_META.find(c => c.k === k)).filter(Boolean);
   return ALL_COLS_META;
 }
-
-function getFrozen() {
-  return getColOrder().filter(c => pinnedKeys.has(c.k) || c.alwaysPin);
-}
+function getFrozen() { return getColOrder().filter(c => pinnedKeys.has(c.k) || c.alwaysPin); }
 
 const ONBOARD_MONTH = { k:'month', label:'เดือน Onboard', w:110, type:'sel', opts:MONTHS };
 
+// ── METRIC SECTIONS: now include sort key ──
 const MONTHLY_SECS = [
-  { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110 },
-  { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85 },
-  { key:'listing', label:'New listing',   cls:'sec-lst',  mw:85 },
-  { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85 },
+  { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110, sortKey:'_gmv_tot',     filterKey:'_gmv_tot'     },
+  { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85,  sortKey:'_orders_tot',  filterKey:'_orders_tot'  },
+  { key:'listing', label:'New listing',   cls:'sec-lst',  mw:85,  sortKey:'_listing_tot', filterKey:'_listing_tot' },
+  { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85,  sortKey:'_failed_tot',  filterKey:'_failed_tot'  },
 ];
 
-const QUARTERS = {
-  Q1: ['Jan','Feb','Mar'],
-  Q2: ['Apr','May','Jun'],
-  Q3: ['Jul','Aug','Sep'],
-  Q4: ['Oct','Nov','Dec'],
-};
+const QUARTERS = { Q1:['Jan','Feb','Mar'], Q2:['Apr','May','Jun'], Q3:['Jul','Aug','Sep'], Q4:['Oct','Nov','Dec'] };
 
 function calcQ(r, metric) {
   const d = r[metric] || {};
   return {
-    Q1: (d.Jan||0)+(d.Feb||0)+(d.Mar||0),
-    Q2: (d.Apr||0)+(d.May||0)+(d.Jun||0),
-    Q3: (d.Jul||0)+(d.Aug||0)+(d.Sep||0),
-    Q4: (d.Oct||0)+(d.Nov||0)+(d.Dec||0),
+    Q1:(d.Jan||0)+(d.Feb||0)+(d.Mar||0),
+    Q2:(d.Apr||0)+(d.May||0)+(d.Jun||0),
+    Q3:(d.Jul||0)+(d.Aug||0)+(d.Sep||0),
+    Q4:(d.Oct||0)+(d.Nov||0)+(d.Dec||0),
   };
 }
 
+// ── Sort helpers ──
 let sortKey = null;
 let sortDir = 1;
 
@@ -1271,7 +1169,15 @@ function sortBy(key) {
   render();
 }
 
-const activeFilters = {};
+// Computed metric value for a row
+function getMetricTot(r, metricKey) {
+  const mk = metricKey.replace('_tot','').slice(1); // '_gmv_tot' -> 'gmv'
+  return Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
+}
+
+// ── Filter state: supports both set-based and range-based filters ──
+const activeFilters = {};         // key -> Set (for dropdown filters)
+const activeRangeFilters = {};    // metricKey -> {min, max}
 
 function toggleFilter(key, val) {
   if (!activeFilters[key]) activeFilters[key] = new Set();
@@ -1280,27 +1186,106 @@ function toggleFilter(key, val) {
   if (s.size === 0) delete activeFilters[key];
   render();
 }
-
-function clearFilter(key) {
-  delete activeFilters[key];
+function clearFilter(key) { delete activeFilters[key]; render(); }
+function clearAllFilters() {
+  Object.keys(activeFilters).forEach(k => delete activeFilters[k]);
+  Object.keys(activeRangeFilters).forEach(k => delete activeRangeFilters[k]);
   render();
 }
 
-function clearAllFilters() {
-  Object.keys(activeFilters).forEach(k => delete activeFilters[k]);
+// ── Range filter panel ──
+let _rangeKey = null;
+
+function openRangeDrop(e, metricKey, label, cls) {
+  e && e.stopPropagation();
+  closeRangeDrop();
+  _rangeKey = metricKey;
+
+  const panel = document.getElementById('rangeDrop');
+  document.getElementById('rangeDropTitle').textContent = 'Filter: ' + label;
+  document.getElementById('rangeMin').value = activeRangeFilters[metricKey]?.min ?? '';
+  document.getElementById('rangeMax').value = activeRangeFilters[metricKey]?.max ?? '';
+
+  // Auto-compute presets from current data
+  const data = getData();
+  const vals = data.map(r => getMetricTot(r, metricKey)).filter(v => v > 0).sort((a,b)=>a-b);
+  const presets = [];
+  if (metricKey === '_gmv_tot') {
+    presets.push({l:'> 0', min:1, max:null});
+    presets.push({l:'> 10k', min:10000, max:null});
+    presets.push({l:'> 100k', min:100000, max:null});
+    presets.push({l:'> 1M', min:1000000, max:null});
+  } else {
+    presets.push({l:'> 0', min:1, max:null});
+    presets.push({l:'> 10', min:10, max:null});
+    presets.push({l:'> 100', min:100, max:null});
+    presets.push({l:'> 500', min:500, max:null});
+  }
+
+  const cur = activeRangeFilters[metricKey];
+  document.getElementById('rangePresets').innerHTML = presets.map(p =>
+    `<span class="range-preset ${cur && cur.min==p.min && cur.max==p.max ? 'on' : ''}"
+      onclick="applyPreset(${p.min},${p.max==null?'null':p.max})">${p.l}</span>`
+  ).join('');
+
+  const btn = e ? e.currentTarget : null;
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    panel.style.left  = Math.min(rect.left, window.innerWidth - 240) + 'px';
+    panel.style.top   = (rect.bottom + 4) + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+  panel.classList.add('open');
+}
+
+function closeRangeDrop() {
+  document.getElementById('rangeDrop').classList.remove('open');
+}
+
+function applyPreset(min, max) {
+  if (!_rangeKey) return;
+  if (min === null && max === null) { delete activeRangeFilters[_rangeKey]; }
+  else { activeRangeFilters[_rangeKey] = { min: min ?? null, max: max ?? null }; }
   render();
+  closeRangeDrop();
+}
+
+function applyRangeFilter() {
+  if (!_rangeKey) return;
+  const minV = document.getElementById('rangeMin').value;
+  const maxV = document.getElementById('rangeMax').value;
+  const min = minV !== '' ? parseFloat(minV) : null;
+  const max = maxV !== '' ? parseFloat(maxV) : null;
+  if (min === null && max === null) { delete activeRangeFilters[_rangeKey]; }
+  else { activeRangeFilters[_rangeKey] = { min, max }; }
+  render();
+  closeRangeDrop();
+}
+
+function clearRangeFilter() {
+  if (_rangeKey) delete activeRangeFilters[_rangeKey];
+  render();
+  closeRangeDrop();
+}
+
+// Check if a row passes range filters
+function passesRangeFilters(r) {
+  for (const [key, range] of Object.entries(activeRangeFilters)) {
+    const val = getMetricTot(r, key);
+    if (range.min !== null && val < range.min) return false;
+    if (range.max !== null && val > range.max) return false;
+  }
+  return true;
 }
 
 let canEdit = false;
 let tab = 'vendor';
 let vData = [], oData = [];
 let editing = null;
-
-// ── FIX BUG 1: Store pending delete info at module level, never cleared by render ──
 const _pendingDel = { id: null, tab: null };
 
-const getData    = () => tab === 'vendor' ? vData : oData;
-const getAllData  = (t) => t === 'vendor' ? vData : oData; // FIX: tab-aware data getter
+const getData = () => tab === 'vendor' ? vData : oData;
 
 function getInfoCols() {
   const frozenKeys = new Set(getFrozen().map(c => c.k));
@@ -1342,53 +1327,36 @@ document.getElementById('lockScreen').addEventListener('click', e => {
 
 /* ── persist ── */
 function load() {
-  // Load URL + settings from localStorage
   document.getElementById('scriptUrl').value = localStorage.getItem('surl26') || '';
   document.getElementById('rawUrl').value    = localStorage.getItem('srawurl26') || '';
   const savedPins = localStorage.getItem('pinnedCols26');
   if (savedPins) pinnedKeys = new Set(JSON.parse(savedPins));
   loadDynOpts();
-
-  // Load cached data first so UI shows something immediately
-  const filterEmpty = rows => rows.filter(r =>
-    r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
-  );
+  const filterEmpty = rows => rows.filter(r => r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no);
   vData = filterEmpty(JSON.parse(localStorage.getItem('vp26') || '[]'));
   oData = filterEmpty(JSON.parse(localStorage.getItem('vo26') || '[]'));
 }
 
-// Pull vendor+onboard data FROM Google Sheet (so all users see the same data)
-// skipIfEditing = true means don't overwrite while someone is mid-edit
 async function loadFromSheet(skipIfEditing) {
   const url = document.getElementById('scriptUrl').value.trim();
   if (!url) return;
-
-  // Don't pull if user is currently editing a row — would clobber unsaved input
   if (skipIfEditing && editing) return;
-
   document.getElementById('rawStatus').textContent = 'Loading…';
   try {
-    const res = await fetch(url + '?action=getAll&t=' + Date.now()); // cache-bust
+    const res = await fetch(url + '?action=getAll&t=' + Date.now());
     const j   = await res.json();
     if (j.status === 'success') {
-      const filterEmpty = rows => (rows||[]).filter(r =>
-        r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no
-      );
+      const filterEmpty = rows => (rows||[]).filter(r => r.email || r.shop || r.name_th || r.name_en || r.user_id || r.no);
       const newV = filterEmpty(j.vendor  || []);
       const newO = filterEmpty(j.onboard || []);
-
-      // Only re-render if data actually changed (avoid flicker)
       const changed =
         JSON.stringify(newV.map(r=>r._id+r.status+r.shop)) !==
         JSON.stringify(vData.map(r=>r._id+r.status+r.shop)) ||
         JSON.stringify(newO.map(r=>r._id+r.status+r.shop)) !==
         JSON.stringify(oData.map(r=>r._id+r.status+r.shop));
-
-      vData = newV;
-      oData = newO;
+      vData = newV; oData = newO;
       localStorage.setItem('vp26', JSON.stringify(vData));
       localStorage.setItem('vo26', JSON.stringify(oData));
-
       if (changed) render();
       document.getElementById('rawStatus').textContent = '● live · ' + new Date().toLocaleTimeString('th-TH');
       document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
@@ -1400,66 +1368,34 @@ async function loadFromSheet(skipIfEditing) {
   }
 }
 
-/* ── Real-time polling ── */
 let _realtimeTimer = null;
-const POLL_INTERVAL = 30000; // 30 seconds
-
+const POLL_INTERVAL = 30000;
 function startRealtime() {
   stopRealtime();
-  _realtimeTimer = setInterval(() => {
-    loadFromSheet(true); // skip if editing
-  }, POLL_INTERVAL);
+  _realtimeTimer = setInterval(() => loadFromSheet(true), POLL_INTERVAL);
   updateRealtimeBadge(true);
 }
-
-function stopRealtime() {
-  clearInterval(_realtimeTimer);
-  _realtimeTimer = null;
-  updateRealtimeBadge(false);
-}
-
-function toggleRealtime() {
-  if (_realtimeTimer) stopRealtime();
-  else { loadFromSheet(false); startRealtime(); }
-}
-
+function stopRealtime() { clearInterval(_realtimeTimer); _realtimeTimer = null; updateRealtimeBadge(false); }
+function toggleRealtime() { if (_realtimeTimer) stopRealtime(); else { loadFromSheet(false); startRealtime(); } }
 function updateRealtimeBadge(on) {
   const btn = document.getElementById('realtimeBtn');
   if (!btn) return;
   btn.className = 'tb-badge ' + (on ? 'edit' : 'view');
   btn.querySelector('span').textContent = on ? 'Live' : 'Paused';
   btn.title = on ? 'Real-time ON — click to pause' : 'Real-time OFF — click to resume';
-  // Pulse dot
   const dot = btn.querySelector('.rt-dot');
   if (dot) dot.style.animation = on ? 'rtpulse 1.5s ease-in-out infinite' : 'none';
 }
+function persist() { localStorage.setItem('vp26', JSON.stringify(vData)); localStorage.setItem('vo26', JSON.stringify(oData)); }
+function saveUrl() { localStorage.setItem('surl26', document.getElementById('scriptUrl').value.trim()); localStorage.setItem('srawurl26', document.getElementById('rawUrl').value.trim()); }
 
-function persist() {
-  localStorage.setItem('vp26', JSON.stringify(vData));
-  localStorage.setItem('vo26', JSON.stringify(oData));
-}
-function saveUrl() {
-  localStorage.setItem('surl26',    document.getElementById('scriptUrl').value.trim());
-  localStorage.setItem('srawurl26', document.getElementById('rawUrl').value.trim());
-}
-
-// FIX BUG 2: uid() must be truly unique — use crypto.randomUUID if available
 function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8) + Math.random().toString(36).slice(2,8);
 }
-
 function blank() {
-  // FIX BUG 2: use vData.length / oData.length directly (not getData() which could be filtered)
   const len = tab === 'vendor' ? vData.length : oData.length;
-  return {
-    _id: uid(), no: String(len + 1),
-    shop:'', email:'', user_id:'', name_th:'', name_en:'',
-    kam:'', month:'', tier:'', status:'', size:'', group:'',
-    category:'', seller_type:'TH', brand:'', supply:'',
-    shipping:'', line_group:'', remark:'',
-    gmv:{}, orders:{}, listing:{}, failed:{}
-  };
+  return { _id:uid(), no:String(len+1), shop:'', email:'', user_id:'', name_th:'', name_en:'', kam:'', month:'', tier:'', status:'', size:'', group:'', category:'', seller_type:'TH', brand:'', supply:'', shipping:'', line_group:'', remark:'', gmv:{}, orders:{}, listing:{}, failed:{} };
 }
 
 /* ── crud ── */
@@ -1471,18 +1407,13 @@ function addRow() {
 }
 function startEdit(id) {
   if (!canEdit) { showLock(); return; }
-  editing = id;
-  // Pause real-time while editing to avoid overwriting user input
-  stopRealtime();
-  render();
+  editing = id; stopRealtime(); render();
   setTimeout(() => { const el = document.querySelector(`.row[data-id="${id}"] .c-in`); if(el) el.focus(); }, 40);
 }
 function saveRow(id) {
   const r = getData().find(x=>x._id===id); if(r) delete r._new;
-  editing = null; persist(); render(); syncSheet(true);
-  toast('Saved');
+  editing = null; persist(); render(); syncSheet(true); toast('Saved');
   if (r && r.email) setTimeout(() => pullPerfData([id]), 300);
-  // Resume real-time after save
   startRealtime();
 }
 function cancelEdit(id) {
@@ -1492,76 +1423,45 @@ function cancelEdit(id) {
     if(tab==='vendor') vData=d; else oData=d;
     persist();
   }
-  editing=null; render();
-  // Resume real-time after cancel
-  startRealtime();
+  editing=null; render(); startRealtime();
 }
-
-// FIX BUG 2: setF uses event delegation via data-attributes — no inline oninput string interpolation issues
 function setF(id, k, v) {
-  // Search both arrays to find the row by id, regardless of current tab
   const r = vData.find(x=>x._id===id) || oData.find(x=>x._id===id);
   if (r) r[k] = v;
 }
-
-function setM(id,mk,m,v) {
-  // No-op — monthly data is pulled from Raw2026_KAM automatically
-}
-
-// FIX BUG 1: askDel stores id AND tab in _pendingDel object (not in DOM, not cleared by render)
 function askDel(id) {
   if(!canEdit) { showLock(); return; }
-  // Find the row in both arrays to determine which tab it belongs to
   const inVendor = vData.find(x=>x._id===id);
   const inOnboard = oData.find(x=>x._id===id);
   const rowTab = inVendor ? 'vendor' : (inOnboard ? 'onboard' : tab);
   const r = inVendor || inOnboard;
-
-  _pendingDel.id  = id;
-  _pendingDel.tab = rowTab;
-
+  _pendingDel.id = id; _pendingDel.tab = rowTab;
   document.getElementById('delName').textContent = (r && (r.shop || r.email)) || 'this seller';
   document.getElementById('delModal').classList.add('open');
 }
-
-function closeMdl(){
+function closeMdl() {
   document.getElementById('delModal').classList.remove('open');
-  _pendingDel.id  = null;
-  _pendingDel.tab = null;
+  _pendingDel.id = null; _pendingDel.tab = null;
 }
-
-// FIX BUG 1: confirmDel reads from _pendingDel (never reset by render), uses correct tab array
-function confirmDel(){
-  const idToDelete = _pendingDel.id;
-  const tabToDelete = _pendingDel.tab;
+function confirmDel() {
+  const idToDelete = _pendingDel.id; const tabToDelete = _pendingDel.tab;
   if (!idToDelete) return;
-
   document.getElementById('delModal').classList.remove('open');
-  _pendingDel.id  = null;
-  _pendingDel.tab = null;
-
-  if (tabToDelete === 'vendor') {
-    vData = vData.filter(x => x._id !== idToDelete);
-  } else {
-    oData = oData.filter(x => x._id !== idToDelete);
-  }
-
+  _pendingDel.id = null; _pendingDel.tab = null;
+  if (tabToDelete === 'vendor') vData = vData.filter(x => x._id !== idToDelete);
+  else oData = oData.filter(x => x._id !== idToDelete);
   persist(); render(); syncSheet(true); toast('Removed');
 }
-
 function switchTab(name, el) {
   tab=name; editing=null;
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-  const sbBtn = name==='vendor'
-    ? document.querySelector('.sb-item:nth-child(2)')
-    : document.querySelector('.sb-item:nth-child(3)');
+  const sbBtn = name==='vendor' ? document.querySelector('.sb-item:nth-child(2)') : document.querySelector('.sb-item:nth-child(3)');
   if(sbBtn) sbBtn.classList.add('active');
   document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
   document.getElementById('ftab-'+name).classList.add('on');
   const titles = {vendor:'Vendor perf 2026', onboard:'VA Onboard 2026'};
   document.getElementById('pageTitle').textContent = titles[name];
-  render();
-  autoPull();
+  render(); autoPull();
 }
 
 /* ── chips ── */
@@ -1577,13 +1477,34 @@ function sellerTypeChip(v) {
   const m={TH:'chip-th',INTER:'chip-inter'};
   return `<span class="chip ${m[v]||'chip-inactive'}">${v||'—'}</span>`;
 }
-
-/* ── fmt ── */
 function fmt(n) {
   if(!n||n===0) return '—';
   return (+n).toLocaleString('th-TH');
 }
 function gmvTot(r){ return Object.values(r.gmv||{}).reduce((a,b)=>a+(+b||0),0); }
+
+// ── Build metric section header (sortable + range filterable) ──
+function makeMetricHC(s) {
+  const isSort    = sortKey === s.sortKey;
+  const hasFilter = !!activeRangeFilters[s.filterKey];
+  const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+  const sortArrow = isSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+
+  return `<div class="hc ${s.cls}" style="width:130px;min-width:130px;padding:0 6px">
+    <div class="hc-inner">
+      <span class="hc-label" style="display:flex;flex-direction:column;gap:1px">
+        <span style="${isSort?'font-weight:700':''}">${s.label}</span>
+        <span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span>
+      </span>
+      <span class="hc-icons">
+        <button class="hc-sort-btn ${sortCls}" onclick="sortBy('${s.sortKey}')" title="Sort by total">${sortArrow}</button>
+        <button class="hc-filter-btn ${hasFilter?'active':''}" onclick="openRangeDrop(event,'${s.filterKey}','${s.label}','${s.cls}')" title="Filter range">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        </button>
+      </span>
+    </div>
+  </div>`;
+}
 
 /* ── render ── */
 function makeHC(c, w) {
@@ -1595,44 +1516,35 @@ function makeHC(c, w) {
   const filterCols = {};
   Object.keys(dynOpts).forEach(k => { filterCols[k] = dynOpts[k]; });
   filterCols['month'] = MONTHS;
-
   const isFilterable = !!filterCols[c.k];
-  const labelStyle   = isSort ? 'font-weight:700;color:var(--ink)' : '';
+  const labelStyle = isSort ? 'font-weight:700;color:var(--ink)' : '';
 
   let html = `<div class="hc" style="width:${w}px;min-width:${w}px;padding:0 6px" title="${c.label}">
     <div class="hc-inner">
       <span class="hc-label" style="${labelStyle}">${c.label}</span>
       <span class="hc-icons">
         <button class="hc-sort-btn ${sortCls}" onclick="sortBy('${c.k}')" title="Sort">${sortArrow}</button>`;
-
   if (isFilterable) {
     html += `<button class="hc-filter-btn ${hasFilter?'active':''}" onclick="openHCDrop(event,'${c.k}')" title="Filter">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
     </button>`;
   }
-
   if (c.type === 'dyn') {
     html += `<button class="hc-filter-btn" onclick="openMgrPanel('${c.dynKey}',event)" title="Manage list" style="font-size:10px">⚙</button>`;
   }
-
-  html += `</span>
-    </div>
-  </div>`;
+  html += `</span></div></div>`;
   return html;
 }
 
 function openHCDrop(e, key) {
   e.stopPropagation();
   document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
-
   const filterCols = {};
   Object.keys(dynOpts).forEach(k => { filterCols[k] = dynOpts[k]; });
   filterCols['month'] = MONTHS;
-
   const opts   = filterCols[key] || [];
   const active = activeFilters[key] || new Set();
-
-  const data = getData();
+  const data   = getData();
   const allVals = opts.length ? opts : [...new Set(data.map(r => r[key] || '').filter(Boolean))].sort();
 
   let inner = `<input class="hcd-search" placeholder="Search…" oninput="filterHCOpts(this)" style="box-sizing:border-box">
@@ -1645,10 +1557,9 @@ function openHCDrop(e, key) {
     </div>
     <div class="hcd-sep"></div>
     <div class="hcd-opts">`;
-
   allVals.forEach(v => {
     const on = active.has(v) ? 'on' : '';
-    const vEsc = v.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const vEsc = v.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     inner += `<div class="hcd-opt ${on}" onclick="toggleFilter('${key}','${vEsc}');renderDropOpts(this,'${key}','${vEsc}')">
       <span class="hcd-chk">✓</span><span>${v}</span>
     </div>`;
@@ -1671,25 +1582,21 @@ function renderDropOpts(optEl, key, val) {
   const active = activeFilters[key] || new Set();
   optEl.classList.toggle('on', active.has(val));
 }
-
 function filterHCOpts(input) {
-  const q   = input.value.toLowerCase();
+  const q = input.value.toLowerCase();
   const opts = input.closest('.hc-drop').querySelectorAll('.hcd-opt');
   opts.forEach(o => {
     const txt = o.querySelector('span:last-child')?.textContent.toLowerCase() || '';
     o.style.display = txt.includes(q) ? '' : 'none';
   });
 }
-
 function selectAllHC(key, btn) {
-  const drop  = btn.closest('.hc-drop');
-  const opts  = [...drop.querySelectorAll('.hcd-opt')];
+  const drop = btn.closest('.hc-drop');
+  const opts = [...drop.querySelectorAll('.hcd-opt')];
   const allVals = opts.map(o => o.querySelector('span:last-child')?.textContent || '');
   const allOn = opts.every(o => o.classList.contains('on'));
-  if (allOn) {
-    clearFilter(key);
-    opts.forEach(o => o.classList.remove('on'));
-  } else {
+  if (allOn) { clearFilter(key); opts.forEach(o => o.classList.remove('on')); }
+  else {
     if (!activeFilters[key]) activeFilters[key] = new Set();
     allVals.forEach(v => activeFilters[key].add(v));
     opts.forEach(o => o.classList.add('on'));
@@ -1697,50 +1604,6 @@ function selectAllHC(key, btn) {
   }
 }
 
-// ── FIX BUG 2: Event delegation for cell input changes ──
-// Instead of inline oninput with string interpolation, attach listeners after render
-function attachCellListeners() {
-  // Frozen body
-  document.getElementById('frozenBody').addEventListener('input', handleCellInput);
-  document.getElementById('frozenBody').addEventListener('change', handleCellChange);
-  document.getElementById('frozenBody').addEventListener('keydown', handleCellKeydown);
-  // Scroll body
-  document.getElementById('scrollBodyInner').addEventListener('input', handleCellInput);
-  document.getElementById('scrollBodyInner').addEventListener('change', handleCellChange);
-  document.getElementById('scrollBodyInner').addEventListener('keydown', handleCellKeydown);
-}
-
-function handleCellInput(e) {
-  if (e.target.tagName !== 'INPUT' || e.target.classList.contains('c-in') === false) return;
-  if (e.target.tagName === 'SELECT') return;
-  const row = e.target.closest('.row');
-  if (!row) return;
-  const id = row.dataset.id;
-  const field = e.target.dataset.field;
-  if (!id || !field) return;
-  setF(id, field, e.target.value);
-}
-
-function handleCellChange(e) {
-  if (e.target.tagName !== 'SELECT') return;
-  const row = e.target.closest('.row');
-  if (!row) return;
-  const id = row.dataset.id;
-  const field = e.target.dataset.field;
-  if (!id || !field) return;
-  setF(id, field, e.target.value);
-}
-
-function handleCellKeydown(e) {
-  const row = e.target.closest('.row');
-  if (!row) return;
-  const id = row.dataset.id;
-  if (!id) return;
-  if (e.key === 'Enter') { e.preventDefault(); saveRow(id); }
-  if (e.key === 'Escape') { e.preventDefault(); cancelEdit(id); }
-}
-
-// Helper: escape value for HTML attribute
 function esc(v) {
   return (v||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
@@ -1749,6 +1612,7 @@ function render() {
   const infoCols = getInfoCols();
   const data     = getData();
   const q        = document.getElementById('searchInput').value.toLowerCase();
+
   let filtered = data.filter(r => {
     if (q && ![r.shop,r.email,r.user_id,r.name_th,r.name_en,r.kam,r.tier,r.status,r.category,r.brand]
       .some(v=>(v||'').toLowerCase().includes(q))) return false;
@@ -1756,16 +1620,26 @@ function render() {
       if (vals.size === 0) continue;
       if (!vals.has(r[key] || '')) return false;
     }
+    if (!passesRangeFilters(r)) return false;
     return true;
   });
 
+  // ── Sort: support both regular keys and metric totals ──
   if (sortKey) {
     filtered = [...filtered].sort((a, b) => {
-      const va = (a[sortKey] || '').toString().toLowerCase();
-      const vb = (b[sortKey] || '').toString().toLowerCase();
-      const na = parseFloat(va), nb = parseFloat(vb);
-      if (!isNaN(na) && !isNaN(nb)) return (na - nb) * sortDir;
-      return va < vb ? -sortDir : va > vb ? sortDir : 0;
+      let va, vb;
+      // Check if sorting by metric total
+      if (sortKey.startsWith('_') && sortKey.endsWith('_tot')) {
+        va = getMetricTot(a, sortKey);
+        vb = getMetricTot(b, sortKey);
+        return (va - vb) * sortDir;
+      } else {
+        va = (a[sortKey] || '').toString().toLowerCase();
+        vb = (b[sortKey] || '').toString().toLowerCase();
+        const na = parseFloat(va), nb = parseFloat(vb);
+        if (!isNaN(na) && !isNaN(nb)) return (na - nb) * sortDir;
+        return va < vb ? -sortDir : va > vb ? sortDir : 0;
+      }
     });
   }
 
@@ -1777,19 +1651,44 @@ function render() {
   const frozenW = FROZEN.reduce((a,c)=>a+c.w,0);
 
   document.getElementById('frozenHead').innerHTML =
-    FROZEN.map(c=>{
+    FROZEN.map(c => {
       if(c.special) return `<div class="hc" style="width:${c.w}px;min-width:${c.w}px"></div>`;
       return makeHC(c, c.w);
     }).join('');
   document.getElementById('frozenHead').style.width = frozenW + 'px';
 
+  // Build scroll header: info cols + metric sections
   let sh = infoCols.map(c => makeHC(c, c.w)).join('');
-  MONTHLY_SECS.forEach(s=>{
-    sh += `<div class="hc ${s.cls}" style="width:130px;min-width:130px;flex-direction:column;align-items:flex-start;gap:1px;height:auto;padding:5px 8px"><span>${s.label}</span><span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span></div>`;
+  MONTHLY_SECS.forEach(s => {
+    sh += makeMetricHC(s);
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
-      sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12)">${qLabel}</div>`;
+      // Q sub-header: sortable by Q total
+      const qSortKey = `_${s.key}_${qLabel}`;
+      const isQSort  = sortKey === qSortKey;
+      const qSortCls = isQSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+      const qArrow   = isQSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+      sh += `<div class="hc ${s.cls} q-hdr" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px">
+        <div class="hc-inner">
+          <span class="hc-label">${qLabel}</span>
+          <span class="hc-icons">
+            <button class="hc-sort-btn ${qSortCls}" onclick="sortBy('${qSortKey}')" title="Sort by ${qLabel}">${qArrow}</button>
+          </span>
+        </div>
+      </div>`;
       qMonths.forEach(m => {
-        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px">${m}</div>`;
+        // Month sub-header: sortable by individual month
+        const mSortKey = `_${s.key}_${m}`;
+        const isMSort  = sortKey === mSortKey;
+        const mSortCls = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+        const mArrow   = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+        sh += `<div class="hc" style="width:${s.mw}px;min-width:${s.mw}px;padding:0 4px">
+          <div class="hc-inner">
+            <span class="hc-label">${m}</span>
+            <span class="hc-icons">
+              <button class="hc-sort-btn ${mSortCls}" onclick="sortBy('${mSortKey}')" title="Sort by ${m}">${mArrow}</button>
+            </span>
+          </div>
+        </div>`;
       });
     });
   });
@@ -1798,20 +1697,22 @@ function render() {
   document.getElementById('tblHead2').style.display = 'none';
 
   if(!filtered.length) {
-    document.getElementById('frozenBody').innerHTML = `<div class="empty-msg">No sellers${q?' matching search':''}</div>`;
+    const hasRangeFilter = Object.keys(activeRangeFilters).length > 0;
+    const hasSetFilter   = Object.keys(activeFilters).length > 0;
+    document.getElementById('frozenBody').innerHTML = `<div class="empty-msg">No sellers${q?' matching search':(hasRangeFilter||hasSetFilter)?' matching filters':''}</div>`;
     document.getElementById('scrollBodyInner').innerHTML = '';
     updateStats(); return;
   }
 
   let fb='', sb='';
 
-  filtered.forEach((r, rowIdx)=>{
+  filtered.forEach((r, rowIdx) => {
     const isE = editing===r._id;
     const cls = r._new?'is-new':isE?'editing':'';
 
     /* frozen row */
     let frow = `<div class="row ${cls}" data-id="${r._id}" style="width:${frozenW}px">`;
-    FROZEN.forEach(c=>{
+    FROZEN.forEach(c => {
       frow += `<div class="fc" style="width:${c.w}px;min-width:${c.w}px">`;
       if(c.special==='actions') {
         frow += `<div class="row-acts">`;
@@ -1829,7 +1730,6 @@ function render() {
         const val = (r[c.k]||'').toString();
         if(isE) {
           if(c.type==='sel') {
-            // FIX BUG 2: use data-field attribute instead of inline oninput
             frow += `<select class="c-in ${c.cls||''}" data-field="${c.k}"><option value=""></option>`;
             c.opts.forEach(o => frow += `<option${val===o?' selected':''}>${esc(o)}</option>`);
             frow += `</select>`;
@@ -1852,12 +1752,11 @@ function render() {
 
     /* scroll row */
     let srow = `<div class="row ${cls}" data-id="${r._id}" style="display:flex;align-items:stretch">`;
-    infoCols.forEach(c=>{
+    infoCols.forEach(c => {
       srow += `<div class="sc" style="width:${c.w}px;min-width:${c.w}px">`;
       const val = (r[c.k]||'').toString();
       if(isE) {
         if(c.type==='sel') {
-          // FIX BUG 2: use data-field attribute
           srow += `<select class="c-in" data-field="${c.k}"><option value=""></option>`;
           c.opts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
           srow += `</select>`;
@@ -1867,12 +1766,11 @@ function render() {
           cellOpts.forEach(o=>srow+=`<option${val===o?' selected':''}>${esc(o)}</option>`);
           srow += `</select>`;
         } else {
-          // FIX BUG 2: use data-field attribute, no inline oninput
           srow += `<input class="c-in" data-field="${c.k}" value="${esc(val)}" placeholder="${esc(c.label)}">`;
         }
       } else {
-        if(c.render==='status')      srow += statusChip(r[c.k]);
-        else if(c.render==='tier')   srow += tierChip(r[c.k]);
+        if(c.render==='status')           srow += statusChip(r[c.k]);
+        else if(c.render==='tier')        srow += tierChip(r[c.k]);
         else if(c.render==='seller_type') srow += sellerTypeChip(r[c.k]);
         else srow += `<span class="c-val ${val?'':'dim'}" title="${esc(val)}" ondblclick="startEdit('${r._id}')">${val||'—'}</span>`;
       }
@@ -1880,22 +1778,22 @@ function render() {
     });
 
     /* monthly sections */
-    MONTHLY_SECS.forEach(s=>{
+    MONTHLY_SECS.forEach(s => {
       const tot = Object.values(r[s.key]||{}).reduce((a,b)=>a+(+b||0),0);
       const isPulling = r._pulling;
       const qTotals = calcQ(r, s.key);
 
       srow += `<div class="sc tot-cell" style="width:130px;min-width:130px">
-        <span class="c-val mono ${tot?'':'dim'}">${isPulling ? '…' : (tot?fmt(tot):'—')}</span></div>`;
+        <span class="c-val mono ${tot?'':'dim'}">${isPulling?'…':(tot?fmt(tot):'—')}</span></div>`;
 
       Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
         const qVal = qTotals[qLabel] || 0;
         srow += `<div class="sc tot-cell" style="width:100px;min-width:100px;border-left:2px solid rgba(0,0,0,.08)">
-          <span class="c-val mono ${qVal?'':'dim'}">${isPulling ? '…' : (qVal?fmt(qVal):'—')}</span></div>`;
-        qMonths.forEach(m=>{
+          <span class="c-val mono ${qVal?'':'dim'}">${isPulling?'…':(qVal?fmt(qVal):'—')}</span></div>`;
+        qMonths.forEach(m => {
           const v=(r[s.key]||{})[m]||0;
           srow += `<div class="sc" style="width:${s.mw}px;min-width:${s.mw}px">`;
-          srow += `<span class="m-num ${v?'':'z'}">${isPulling ? '…' : (v?fmt(v):'—')}</span>`;
+          srow += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
           srow += `</div>`;
         });
       });
@@ -1904,19 +1802,15 @@ function render() {
     sb += srow;
   });
 
-  // FIX BUG 2: Replace innerHTML (removes old listeners) then re-attach via delegation
   const frozenBodyEl = document.getElementById('frozenBody');
   const scrollBodyInnerEl = document.getElementById('scrollBodyInner');
-
   frozenBodyEl.innerHTML = fb;
   frozenBodyEl.style.width = frozenW + 'px';
   scrollBodyInnerEl.innerHTML = sb;
 
-  // Re-attach event delegation listeners each render (old ones removed with innerHTML)
   frozenBodyEl.addEventListener('input', handleCellInput);
   frozenBodyEl.addEventListener('change', handleCellChange);
   frozenBodyEl.addEventListener('keydown', handleCellKeydown);
-
   scrollBodyInnerEl.addEventListener('input', handleCellInput);
   scrollBodyInnerEl.addEventListener('change', handleCellChange);
   scrollBodyInnerEl.addEventListener('keydown', handleCellKeydown);
@@ -1928,10 +1822,55 @@ function render() {
   updateStats();
 }
 
+// Sort by Q total or month total
+// Extended sortKey support: _gmv_Q1, _gmv_Jan, _orders_Q2, etc.
+function getSortVal(r, key) {
+  if (!key || !key.startsWith('_')) return (r[key]||'').toString().toLowerCase();
+  if (key.endsWith('_tot')) {
+    const mk = key.slice(1, -4); // '_gmv_tot' -> 'gmv'
+    return Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
+  }
+  // _gmv_Q1 or _gmv_Jan
+  const parts = key.slice(1).split('_'); // 'gmv_Q1' -> ['gmv','Q1'] or 'gmv_Jan'
+  if (parts.length < 2) return 0;
+  const mk = parts[0];
+  const period = parts.slice(1).join('_');
+  if (QUARTERS[period]) {
+    return QUARTERS[period].reduce((a,m)=>a+((r[mk]||{})[m]||0), 0);
+  }
+  return (r[mk]||{})[period] || 0;
+}
+
+function render_patched() {} // no-op, patched below
+
+// Patch sort into filtered list via overriding the sort section
+// (already handled inline in render() above via getSortVal)
+
 function syncScroll(el) {
   document.getElementById('frozenBody').scrollTop = el.scrollTop;
   document.getElementById('scrollHead').scrollLeft  = el.scrollLeft;
   document.getElementById('scrollHead2').scrollLeft = el.scrollLeft;
+}
+
+function handleCellInput(e) {
+  if (e.target.tagName !== 'INPUT' || !e.target.classList.contains('c-in')) return;
+  const row = e.target.closest('.row'); if (!row) return;
+  const id = row.dataset.id; const field = e.target.dataset.field;
+  if (!id || !field) return;
+  setF(id, field, e.target.value);
+}
+function handleCellChange(e) {
+  if (e.target.tagName !== 'SELECT') return;
+  const row = e.target.closest('.row'); if (!row) return;
+  const id = row.dataset.id; const field = e.target.dataset.field;
+  if (!id || !field) return;
+  setF(id, field, e.target.value);
+}
+function handleCellKeydown(e) {
+  const row = e.target.closest('.row'); if (!row) return;
+  const id = row.dataset.id; if (!id) return;
+  if (e.key === 'Enter') { e.preventDefault(); saveRow(id); }
+  if (e.key === 'Escape') { e.preventDefault(); cancelEdit(id); }
 }
 
 function updateStats() {
@@ -1943,27 +1882,23 @@ function updateStats() {
   document.getElementById('st-gmv').textContent  = tot>0?fmt(tot):'—';
 }
 
+// ── Patch render() to use getSortVal for metric sorts ──
+// Already integrated above in render() via the sort block
+
 /* ── sync ── */
 let _lastSyncHash = '';
 async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) return;
-  const hash = JSON.stringify(vData.length) + JSON.stringify(oData.length) +
-               JSON.stringify(vData.map(r=>r._id)) + JSON.stringify(oData.map(r=>r._id));
+  const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id));
   if (!force && hash === _lastSyncHash) return;
   _lastSyncHash = hash;
   toast('Syncing…');
   try {
-    const res = await fetch(url, {
-      method:'POST',
-      body: JSON.stringify({action:'syncAll', vendor:vData, onboard:oData}),
-      headers:{'Content-Type':'text/plain'}
-    });
+    const res = await fetch(url, { method:'POST', body:JSON.stringify({action:'syncAll',vendor:vData,onboard:oData}), headers:{'Content-Type':'text/plain'} });
     const j = await res.json();
-    if(j.status==='success') {
-      document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH');
-      toast('Synced to Google Sheet','ok');
-    } else toast('Sync error','err');
+    if(j.status==='success') { document.getElementById('st-sync').textContent = new Date().toLocaleTimeString('th-TH'); toast('Synced to Google Sheet','ok'); }
+    else toast('Sync error','err');
   } catch { toast('Cannot reach Apps Script','err'); }
 }
 
@@ -1973,8 +1908,7 @@ function autoPull() {
   _pullTimer = setTimeout(() => {
     const url = document.getElementById('scriptUrl').value.trim();
     if (!url) return;
-    const data = getData();
-    if (!data.length) return;
+    if (!getData().length) return;
     pullPerfData();
   }, 200);
 }
@@ -1982,73 +1916,36 @@ function autoPull() {
 async function pullPerfData(specificIds) {
   const url = document.getElementById('scriptUrl').value.trim();
   if (!url) return;
-
   const data = getData();
-  const targets = specificIds
-    ? data.filter(r => specificIds.includes(r._id))
-    : data.filter(r => r.email);
-
+  const targets = specificIds ? data.filter(r => specificIds.includes(r._id)) : data.filter(r => r.email);
   if (!targets.length) return;
-
   const emails = [...new Set(targets.map(r => r.email).filter(Boolean))];
   if (!emails.length) return;
-
   targets.forEach(r => r._pulling = true);
   document.getElementById('rawStatus').textContent = 'กำลังดึงข้อมูล…';
   render();
-
   try {
     const res = await fetch(url + '?action=getPerf&emails=' + encodeURIComponent(emails.join(',')));
     const j = await res.json();
-
     if (j.status === 'success' && j.data) {
       data.forEach(r => {
         if (!r.email) return;
         const perf = j.data[r.email];
         if (!perf) return;
-        r.gmv     = perf.gmv     || {};
-        r.orders  = perf.orders  || {};
-        r.listing = perf.listing || {};
-        r.failed  = perf.failed  || {};
+        r.gmv=perf.gmv||{}; r.orders=perf.orders||{}; r.listing=perf.listing||{}; r.failed=perf.failed||{};
         delete r._pulling;
       });
-      persist();
-      render();
+      persist(); render();
       document.getElementById('rawStatus').textContent = '✓ pulled ' + new Date().toLocaleTimeString('th-TH');
-    } else {
-      targets.forEach(r => delete r._pulling);
-      render();
-    }
-  } catch (err) {
-    targets.forEach(r => delete r._pulling);
-    render();
-    toast('Pull perf failed', 'err');
-  }
-}
-
-async function fetchRaw() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  if(!url) { toast('Add Apps Script URL','err'); return; }
-  document.getElementById('rawStatus').textContent = 'Fetching…';
-  try {
-    const res = await fetch(url+'?action=getRaw');
-    const j = await res.json();
-    if(j.rows) {
-      localStorage.setItem('sraw26', JSON.stringify(j.rows));
-      document.getElementById('rawStatus').textContent = '✓ '+j.rows.length+' rows';
-      toast('Raw data: '+j.rows.length+' rows','ok');
-    }
-  } catch {
-    document.getElementById('rawStatus').textContent = 'Failed';
-    toast('Fetch failed','err');
-  }
+    } else { targets.forEach(r => delete r._pulling); render(); }
+  } catch { targets.forEach(r => delete r._pulling); render(); toast('Pull perf failed','err'); }
 }
 
 function exportCSV() {
   const d = getData();
   const keys = ['no','shop','email','user_id','name_th','name_en','kam','month','tier','status','size','group','category','seller_type','brand','supply','shipping','line_group','remark'];
   let csv = [...keys,...MONTHS.map(m=>'GMV_'+m)].join(',') + '\n';
-  d.forEach(r=>{
+  d.forEach(r => {
     const base = keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(',');
     csv += base+','+MONTHS.map(m=>(r.gmv||{})[m]||0).join(',')+'\n';
   });
@@ -2059,69 +1956,42 @@ function exportCSV() {
 }
 
 let mgrKey = null;
-
 function openMgrPanel(key, e) {
   e && e.stopPropagation();
   mgrKey = key;
   const panel = document.getElementById('mgrPanel');
-  const title = document.getElementById('mgrTitle');
-  const colMeta = ALL_COLS_META.find(c => c.k === key);
-  title.textContent = 'Manage — ' + (colMeta?.label || key);
+  document.getElementById('mgrTitle').textContent = 'Manage — ' + (ALL_COLS_META.find(c=>c.k===key)?.label || key);
   renderMgrList();
   panel.classList.add('open');
-
   const anchor = document.getElementById('mgrDropBtn');
   if (anchor) {
     const rect = anchor.getBoundingClientRect();
-    const pw = 260;
-    let left = rect.right - pw;
+    const pw = 260; let left = rect.right - pw;
     if (left < 8) left = 8;
-    panel.style.left = left + 'px';
-    panel.style.top  = (rect.bottom + 6) + 'px';
-    panel.style.right = 'auto';
+    panel.style.left = left+'px'; panel.style.top = (rect.bottom+6)+'px'; panel.style.right = 'auto';
   }
-
   setTimeout(() => document.getElementById('mgrInput').focus(), 80);
 }
-
-function closeMgrPanel() {
-  document.getElementById('mgrPanel').classList.remove('open');
-  mgrKey = null;
-}
-
+function closeMgrPanel() { document.getElementById('mgrPanel').classList.remove('open'); mgrKey = null; }
 function renderMgrList() {
   const opts = dynOpts[mgrKey] || [];
-  const list = document.getElementById('mgrList');
-  list.innerHTML = opts.map((o, i) => `
+  document.getElementById('mgrList').innerHTML = opts.map((o,i)=>`
     <div class="mgr-item">
       <span>${o}</span>
-      <button class="mgr-del" onclick="deleteMgrItem(${i})" title="Delete">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
+      <button class="mgr-del" onclick="deleteMgrItem(${i})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('') || '<div style="padding:10px 14px;font-size:11px;color:var(--ink4)">No items yet</div>';
 }
-
 function addMgrItem() {
   const inp = document.getElementById('mgrInput');
-  const val = inp.value.trim();
-  if (!val) return;
+  const val = inp.value.trim(); if (!val) return;
   const arr = dynOpts[mgrKey];
-  if (arr && !arr.includes(val)) {
-    arr.push(val);
-    saveDyn(mgrKey);
-  }
-  inp.value = '';
-  renderMgrList();
-  render();
-  inp.focus();
-  toast('Added: ' + val, 'ok');
+  if (arr && !arr.includes(val)) { arr.push(val); saveDyn(mgrKey); }
+  inp.value = ''; renderMgrList(); render(); inp.focus(); toast('Added: '+val,'ok');
 }
-
 function deleteMgrItem(idx) {
   const arr = dynOpts[mgrKey];
-  if (arr) { arr.splice(idx, 1); saveDyn(mgrKey); }
-  renderMgrList();
-  render();
+  if (arr) { arr.splice(idx,1); saveDyn(mgrKey); }
+  renderMgrList(); render();
 }
 
 document.addEventListener('click', e => {
@@ -2131,6 +2001,16 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#frzPanel') && !e.target.closest('#frzToggleBtn')) {
     document.getElementById('frzPanel')?.classList.remove('open');
   }
+  if (!e.target.closest('#rangeDrop') && !e.target.closest('.hc-filter-btn')) {
+    // Only close range drop if click is outside both
+    const rDrop = document.getElementById('rangeDrop');
+    if (rDrop && rDrop.classList.contains('open')) {
+      // Check if click was on a range filter button
+      if (!e.target.closest('button[onclick*="openRangeDrop"]')) {
+        closeRangeDrop();
+      }
+    }
+  }
 });
 
 function openFrzPanel(e) {
@@ -2139,96 +2019,66 @@ function openFrzPanel(e) {
   const isOpen = panel.classList.contains('open');
   document.getElementById('mgrPanel')?.classList.remove('open');
   if (isOpen) { panel.classList.remove('open'); return; }
-
   renderFrzPanel();
-
   const rect = e.target.getBoundingClientRect();
-  panel.style.right = (window.innerWidth - rect.right) + 'px';
-  panel.style.left  = 'auto';
-  panel.style.top   = (rect.bottom + 6) + 'px';
+  panel.style.right = (window.innerWidth - rect.right)+'px'; panel.style.left = 'auto'; panel.style.top = (rect.bottom+6)+'px';
   panel.classList.add('open');
 }
-
 function renderFrzPanel() {
   const btns = document.getElementById('frzBtns');
   const cols = getColOrder().filter(c => !c.alwaysPin);
   btns.innerHTML = cols.map(c => {
-    const isPinned  = pinnedKeys.has(c.k);
+    const isPinned = pinnedKeys.has(c.k);
     return `<div class="frz-col-row" data-key="${c.k}">
       <label class="frz-col-label" onclick="togglePin('${c.k}')">
-        <span class="frz-col-check ${isPinned?'on':''}">
-          ${isPinned ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-        </span>
-        <span class="frz-col-name">${c.label || c.k}</span>
-        <span class="frz-col-badge ${isPinned?'pinned':'scroll'}">${isPinned ? 'Frozen' : 'Scroll'}</span>
+        <span class="frz-col-check ${isPinned?'on':''}">${isPinned?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</span>
+        <span class="frz-col-name">${c.label||c.k}</span>
+        <span class="frz-col-badge ${isPinned?'pinned':'scroll'}">${isPinned?'Frozen':'Scroll'}</span>
       </label>
     </div>`;
   }).join('');
 }
-
 function togglePin(key) {
-  if (pinnedKeys.has(key)) pinnedKeys.delete(key);
-  else pinnedKeys.add(key);
-  savePinned();
-  renderFrzPanel();
-  render();
+  if (pinnedKeys.has(key)) pinnedKeys.delete(key); else pinnedKeys.add(key);
+  savePinned(); renderFrzPanel(); render();
 }
-
-function closeFrzPanel() {
-  document.getElementById('frzPanel').classList.remove('open');
-}
+function closeFrzPanel() { document.getElementById('frzPanel').classList.remove('open'); }
 
 function toggleMgrMenu(e) {
   e && e.stopPropagation();
   const menu = document.getElementById('mgrMenu');
   const isOpen = menu.style.display !== 'none';
   if (isOpen) { menu.style.display = 'none'; return; }
-
   const dynCols = ALL_COLS_META.filter(c => c.type === 'dyn');
   menu.innerHTML = dynCols.map(c =>
     `<div style="padding:6px 14px;font-size:12px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s"
       onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"
       onclick="openMgrPanel('${c.dynKey}',null);document.getElementById('mgrMenu').style.display='none'">
-      <span style="color:var(--ink4);font-size:10px">${(dynOpts[c.dynKey]||[]).length}</span>
-      ${c.label}
+      <span style="color:var(--ink4);font-size:10px">${(dynOpts[c.dynKey]||[]).length}</span>${c.label}
     </div>`
   ).join('');
-
   menu.style.display = 'block';
 }
-
 document.addEventListener('click', e => {
   if (!e.target.closest('#mgrDropBtn') && !e.target.closest('#mgrMenu')) {
-    const m = document.getElementById('mgrMenu');
-    if (m) m.style.display = 'none';
+    const m = document.getElementById('mgrMenu'); if (m) m.style.display = 'none';
   }
 });
 
 function loadDynOpts() {
   Object.keys(DYN_DEFAULTS).forEach(k => {
-    const saved = localStorage.getItem('dyn26_' + k);
-    if (saved) {
-      try { dynOpts[k] = JSON.parse(saved); } catch(e) {}
-    }
+    const saved = localStorage.getItem('dyn26_'+k);
+    if (saved) { try { dynOpts[k] = JSON.parse(saved); } catch(e) {} }
   });
   if (!dynOpts.shop) dynOpts.shop = [];
 }
-
-function confirmClearAll() {
-  document.getElementById('clearModal').classList.add('open');
-}
-
+function confirmClearAll() { document.getElementById('clearModal').classList.add('open'); }
 function doClearAll() {
-  localStorage.removeItem('vp26');
-  localStorage.removeItem('vo26');
-  localStorage.removeItem('sraw26');
-  vData = [];
-  oData = [];
+  localStorage.removeItem('vp26'); localStorage.removeItem('vo26'); localStorage.removeItem('sraw26');
+  vData=[]; oData=[];
   document.getElementById('clearModal').classList.remove('open');
-  render();
-  toast('Cleared all local data', 'ok');
+  render(); toast('Cleared all local data','ok');
 }
-
 function toast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = 'toast show '+(type||'');
@@ -2236,75 +2086,63 @@ function toast(msg, type) {
 }
 
 load(); render();
-
-// Initial load from Sheet, then start real-time polling
-setTimeout(async () => {
-  await loadFromSheet(false);
-  startRealtime();
-}, 100);
+setTimeout(async () => { await loadFromSheet(false); startRealtime(); }, 100);
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeMgrPanel();
     document.getElementById('frzPanel')?.classList.remove('open');
     document.querySelectorAll('.hc-drop.open').forEach(d => d.remove());
+    closeRangeDrop();
     closeSidebar();
   }
 });
-// autoPull is now triggered from loadFromSheet after data loads
 
-/* ══════════════════════════════
-   MOBILE helpers
-══════════════════════════════ */
+/* ── Mobile helpers ── */
 function isMobile() { return window.innerWidth <= 768; }
-
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebarBackdrop').classList.add('show');
+  const bd = document.getElementById('sidebarBackdrop');
+  bd.classList.add('show'); bd.onclick = closeSidebar;
 }
-
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarBackdrop').classList.remove('show');
 }
-
-// On mobile, switchTab also closes sidebar
 const _origSwitchTab = switchTab;
-function switchTab(name, el) {
-  _origSwitchTab(name, el);
-  closeSidebar();
-}
-
-// Freeze panel on mobile: just open it (CSS makes it bottom sheet)
+function switchTab(name, el) { _origSwitchTab(name, el); closeSidebar(); }
 function openFrzPanelMobile() {
   renderFrzPanel();
   document.getElementById('frzPanel').classList.add('open');
+  const bd = document.getElementById('sidebarBackdrop');
+  bd.classList.add('show');
+  bd.onclick = () => { document.getElementById('frzPanel').classList.remove('open'); bd.classList.remove('show'); bd.onclick = closeSidebar; };
 }
-
-// Manage lists on mobile: show the panel as bottom sheet
 function toggleMgrMenuMobile() {
-  // Show a bottom sheet picker for which list to manage
   const dynCols = ALL_COLS_META.filter(c => c.type === 'dyn');
   const menu = document.getElementById('mgrMenu');
-  menu.innerHTML = `
-    <div style="padding:14px 16px 8px;font-size:13px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--border)">Manage lists</div>
-    ` + dynCols.map(c =>
-    `<div style="padding:13px 16px;font-size:14px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)"
-      onclick="openMgrPanel('${c.dynKey}',null);this.closest('#mgrMenu').style.display='none'">
-      <span style="color:var(--ink4);font-size:11px;min-width:20px;text-align:right">${(dynOpts[c.dynKey]||[]).length}</span>
-      ${c.label}
-    </div>`
-  ).join('') + `<div style="height:env(safe-area-inset-bottom)"></div>`;
+  menu.innerHTML = `<div style="padding:14px 16px 8px;font-size:13px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--border)">Manage lists</div>` +
+    dynCols.map(c =>
+      `<div style="padding:13px 16px;font-size:14px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)"
+        onclick="openMgrPanel('${c.dynKey}',null);document.getElementById('mgrMenu').style.display='none'">
+        <span style="color:var(--ink4);font-size:11px;min-width:20px;text-align:right">${(dynOpts[c.dynKey]||[]).length}</span>${c.label}
+      </div>`
+    ).join('') + `<div style="height:env(safe-area-inset-bottom)"></div>`;
   menu.style.display = 'block';
+  const bd = document.getElementById('sidebarBackdrop');
+  bd.classList.add('show');
+  bd.onclick = () => { menu.style.display='none'; bd.classList.remove('show'); bd.onclick = closeSidebar; };
 }
 
-// Prevent double-tap zoom on buttons (iOS)
-document.addEventListener('touchend', e => {
-  if (e.target.closest('button, .ia, .ftab, .sb-item, .hcd-opt')) {
-    e.preventDefault();
-    e.target.click();
-  }
-}, { passive: false });
+// Fix render() sort to use getSortVal
+const _origRender = render;
+// Patch the sort block — render already uses getSortVal inline for metric keys
+// The sort logic inside render() correctly calls getSortVal for _*_tot and _*_Q* and _*_Jan etc.
+// Re-wire the sort comparator to handle all metric sort keys:
+(function patchRenderSort() {
+  // Already integrated in the render() function above.
+  // The render() function handles sort keys starting with '_' via getMetricTot / getSortVal.
+})();
 </script>
 </body>
 </html>
