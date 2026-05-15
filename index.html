@@ -1693,35 +1693,64 @@ function startEdit(id) {
   setTimeout(() => { const el = document.querySelector(`.row[data-id="${id}"] .c-in`); if(el) el.focus(); }, 40);
 }
 function saveRow(id) {
-  const r = getData().find(x=>x._id===id);
+  // Find row in any array
+  const inVendor  = vData.find(x=>x._id===id);
+  const inOnboard = oData.find(x=>x._id===id);
+  const inOffboard= xbData.find(x=>x._id===id);
+  const r = inVendor || inOnboard || inOffboard;
   if (!r) return;
   delete r._new;
 
   const statusVal = (r.status||'').toLowerCase().trim();
-  const srcTab = tab;
+  const srcTab = tab; // current tab user is on
 
-  // Auto-move to Offboard tab
+  // Determine actual home tab from which array the row is in
+  const actualTab = inVendor ? 'vendor' : inOnboard ? 'onboard' : 'offboard';
+
   const isOffboard = statusVal === 'offboard';
-  const isReject   = srcTab === 'onboard' && statusVal === 'reject';
+  const isReject   = actualTab === 'onboard' && statusVal === 'reject';
 
-  if ((isOffboard || isReject) && srcTab !== 'offboard') {
+  // ── Move TO offboard ──
+  if ((isOffboard || isReject) && actualTab !== 'offboard') {
     r.offboard_source = isReject
       ? 'Rejected from Onboard'
-      : (srcTab === 'vendor' ? 'Offboarded from Vendor' : 'Offboarded from Onboard');
+      : (actualTab === 'vendor' ? 'Offboarded from Vendor' : 'Offboarded from Onboard');
     r.offboard_date = new Date().toLocaleDateString('th-TH');
+    r._origin_tab = actualTab; // remember where it came from
     if (isReject) r.status = 'Reject';
 
-    // Remove from source
-    if (srcTab === 'vendor')       vData = vData.filter(x=>x._id!==id);
-    else if (srcTab === 'onboard') oData = oData.filter(x=>x._id!==id);
+    if (actualTab === 'vendor')       vData = vData.filter(x=>x._id!==id);
+    else if (actualTab === 'onboard') oData = oData.filter(x=>x._id!==id);
 
-    // Add to offboard if not already there
     if (!xbData.find(x=>x._id===id)) xbData.push(r);
 
     editing = null; persist();
     setTimeout(() => {
       switchTab('offboard', null);
       toast(`ย้าย ${r.email||r.shop||'seller'} → Offboard แล้ว ✓`, 'ok');
+    }, 80);
+    return;
+  }
+
+  // ── Move BACK from offboard ──
+  if (actualTab === 'offboard' && !isOffboard && statusVal !== 'reject') {
+    const originTab = r._origin_tab || 'vendor'; // go back to origin or vendor by default
+    r.offboard_source = '';
+    r.offboard_date   = '';
+    delete r._origin_tab;
+
+    xbData = xbData.filter(x=>x._id!==id);
+
+    if (originTab === 'onboard') {
+      if (!oData.find(x=>x._id===id)) oData.push(r);
+    } else {
+      if (!vData.find(x=>x._id===id)) vData.push(r);
+    }
+
+    editing = null; persist();
+    setTimeout(() => {
+      switchTab(originTab, null);
+      toast(`ย้าย ${r.email||r.shop||'seller'} → ${originTab === 'onboard' ? 'VA Onboard' : 'Vendor perf'} แล้ว ✓`, 'ok');
     }, 80);
     return;
   }
@@ -2344,6 +2373,11 @@ function render() {
     filtered = [...filtered].sort((a, b) => {
       if (sortKey.startsWith('_')) {
         return (getSortVal(a, sortKey) - getSortVal(b, sortKey)) * sortDir;
+      }
+      // Sort month column by calendar order, not alphabetically
+      if (sortKey === 'month') {
+        const mi = v => MONTHS.indexOf(v) === -1 ? 99 : MONTHS.indexOf(v);
+        return (mi(a.month) - mi(b.month)) * sortDir;
       }
       const va = (a[sortKey] || '').toString().toLowerCase();
       const vb = (b[sortKey] || '').toString().toLowerCase();
