@@ -1393,7 +1393,7 @@ const ONBOARD_MONTH  = { k:'month',           label:'เดือน Onboard',  
 const OFFBOARD_SOURCE = { k:'offboard_source', label:'ที่มา',           w:180 };
 const OFFBOARD_DATE   = { k:'offboard_date',   label:'วันที่ Offboard', w:120 };
 
-// ── METRIC SECTIONS: now include sort key ──
+// ── METRIC SECTIONS ──
 const MONTHLY_SECS_DEFAULT = [
   { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110, sortKey:'_gmv_tot',     filterKey:'_gmv_tot'     },
   { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85,  sortKey:'_orders_tot',  filterKey:'_orders_tot'  },
@@ -1401,7 +1401,7 @@ const MONTHLY_SECS_DEFAULT = [
   { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85,  sortKey:'_failed_tot',  filterKey:'_failed_tot'  },
 ];
 
-// Load saved metric order from localStorage
+// Load saved metric order
 let MONTHLY_SECS = (() => {
   const saved = localStorage.getItem('metricOrder26');
   if (!saved) return MONTHLY_SECS_DEFAULT;
@@ -1415,46 +1415,60 @@ function saveMetricOrder() {
   localStorage.setItem('metricOrder26', JSON.stringify(MONTHLY_SECS.map(s=>s.key)));
 }
 
-// Metric section drag state
+// Collapse state: which sections are collapsed
+// collapsed = show only TOTAL col, hide Q1-Q4 and months
+// expanded = show TOTAL + Q1-Q4 only (months hidden)
+// full = show everything
+const METRIC_STATES = ['full', 'quarters', 'total']; // cycle through these
+let metricCollapse = JSON.parse(localStorage.getItem('metricCollapse26') || '{}');
+// default: all sections in 'full' state
+MONTHLY_SECS_DEFAULT.forEach(s => { if (!metricCollapse[s.key]) metricCollapse[s.key] = 'full'; });
+
+function cycleMetricState(key) {
+  const cur = metricCollapse[key] || 'full';
+  const idx = METRIC_STATES.indexOf(cur);
+  metricCollapse[key] = METRIC_STATES[(idx + 1) % METRIC_STATES.length];
+  localStorage.setItem('metricCollapse26', JSON.stringify(metricCollapse));
+  render();
+}
+
+function getMetricState(key) { return metricCollapse[key] || 'full'; }
+
+// Drag-to-reorder metric sections
 let _metricDrag = null;
 
-function startMetricDrag(e, secKey) {
+function startMetricSecDrag(e, key) {
   if (e.button !== 0) return;
   e.preventDefault(); e.stopPropagation();
-  _metricDrag = { key: secKey, startX: e.clientX };
+  _metricDrag = { key, startX: e.clientX, targetKey: null };
   document.body.classList.add('col-resizing');
 
   function onMove(ev) {
     if (!_metricDrag) return;
-    const dx = ev.clientX - _metricDrag.startX;
-    // Find target section based on horizontal position
+    // Find which section header we're over by checking rendered header positions
     const headers = [...document.querySelectorAll('[data-metric-sec]')];
-    let targetKey = null;
+    let found = null;
     for (const h of headers) {
-      const rect = h.getBoundingClientRect();
-      if (ev.clientX >= rect.left && ev.clientX <= rect.right) {
-        targetKey = h.dataset.metricSec;
-        break;
-      }
+      const r = h.getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right) { found = h.dataset.metricSec; break; }
     }
     headers.forEach(h => h.classList.remove('metric-drag-target'));
-    if (targetKey && targetKey !== _metricDrag.key) {
-      document.querySelector(`[data-metric-sec="${targetKey}"]`)?.classList.add('metric-drag-target');
-      _metricDrag.targetKey = targetKey;
-    }
+    if (found && found !== _metricDrag.key) {
+      document.querySelectorAll(`[data-metric-sec="${found}"]`).forEach(h => h.classList.add('metric-drag-target'));
+      _metricDrag.targetKey = found;
+    } else { _metricDrag.targetKey = null; }
   }
 
   function onUp() {
     document.body.classList.remove('col-resizing');
-    document.querySelectorAll('[data-metric-sec]').forEach(h => h.classList.remove('metric-drag-target'));
-    if (_metricDrag?.targetKey && _metricDrag.targetKey !== _metricDrag.key) {
-      const srcIdx = MONTHLY_SECS.findIndex(s=>s.key===_metricDrag.key);
-      const tgtIdx = MONTHLY_SECS.findIndex(s=>s.key===_metricDrag.targetKey);
-      if (srcIdx !== -1 && tgtIdx !== -1) {
-        const [moved] = MONTHLY_SECS.splice(srcIdx, 1);
-        MONTHLY_SECS.splice(tgtIdx, 0, moved);
-        saveMetricOrder();
-        render();
+    document.querySelectorAll('.metric-drag-target').forEach(h => h.classList.remove('metric-drag-target'));
+    if (_metricDrag?.targetKey) {
+      const si = MONTHLY_SECS.findIndex(s=>s.key===_metricDrag.key);
+      const ti = MONTHLY_SECS.findIndex(s=>s.key===_metricDrag.targetKey);
+      if (si !== -1 && ti !== -1 && si !== ti) {
+        const [moved] = MONTHLY_SECS.splice(si, 1);
+        MONTHLY_SECS.splice(ti, 0, moved);
+        saveMetricOrder(); render();
       }
     }
     _metricDrag = null;
@@ -2179,9 +2193,12 @@ function makeMetricHC(s) {
   const hasFilter = !!activeRangeFilters[s.filterKey];
   const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
   const sortArrow = isSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  const state     = getMetricState(s.key);
+  const stateIcon = state === 'full' ? '◀' : state === 'quarters' ? '▶' : '▶▶';
+  const stateTitle = state === 'full' ? 'คลิกเพื่อแสดงแค่ Q' : state === 'quarters' ? 'คลิกเพื่อแสดงแค่ Total' : 'คลิกเพื่อแสดงทั้งหมด';
 
   return `<div class="hc ${s.cls}" style="width:${w}px;min-width:${w}px;padding:0 4px" data-col="${s.key}_tot" data-metric-sec="${s.key}">
-    <span class="metric-drag-handle" onmousedown="startMetricDrag(event,'${s.key}')" title="Drag to reorder metric">
+    <span class="metric-drag-handle" onmousedown="startMetricSecDrag(event,'${s.key}')" title="ลากเพื่อเรียงใหม่">
       <svg width="8" height="12" viewBox="0 0 8 12" fill="none"><circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="6" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="6" r="1.2" fill="currentColor"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/><circle cx="2" cy="10" r="1.2" fill="currentColor"/><circle cx="6" cy="10" r="1.2" fill="currentColor"/></svg>
     </span>
     <div class="hc-inner" style="flex:1">
@@ -2190,10 +2207,11 @@ function makeMetricHC(s) {
         <span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span>
       </span>
       <span class="hc-icons">
-        <button class="hc-sort-btn ${sortCls}" onclick="sortBy('${s.sortKey}')" title="Sort by total">${sortArrow}</button>
-        <button class="hc-filter-btn ${hasFilter?'active':''}" onclick="openRangeDrop(event,'${s.filterKey}','${s.label}','${s.cls}')" title="Filter range">
+        <button class="hc-sort-btn ${sortCls}" onclick="sortBy('${s.sortKey}')" title="Sort">${sortArrow}</button>
+        <button class="hc-filter-btn ${hasFilter?'active':''}" onclick="openRangeDrop(event,'${s.filterKey}','${s.label}','${s.cls}')" title="Filter">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         </button>
+        <button class="hc-filter-btn" onclick="cycleMetricState('${s.key}')" title="${stateTitle}" style="font-size:9px;width:20px">${stateIcon}</button>
       </span>
     </div>
     ${resizeHandle(s.key + '_tot')}
@@ -2511,6 +2529,9 @@ function render() {
   let sh = infoCols.map(c => makeHC(c, c.w)).join('');
   MONTHLY_SECS.forEach(s => {
     sh += makeMetricHC(s);
+    const state = getMetricState(s.key);
+    if (state === 'total') return; // only show total col
+
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
       const qColKey    = s.key + '_' + qLabel;
       const qW         = getColW(qColKey);
@@ -2519,7 +2540,7 @@ function render() {
       const qSortCls   = isQSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
       const qArrow     = isQSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
       const qHasFilter = !!activeRangeFilters[qSortKey];
-      sh += `<div class="hc ${s.cls} q-hdr" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px" data-col="${qColKey}">
+      sh += `<div class="hc ${s.cls} q-hdr" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.12);padding:0 4px" data-col="${qColKey}" data-metric-sec="${s.key}">
         <div class="hc-inner">
           <span class="hc-label">${qLabel}</span>
           <span class="hc-icons">
@@ -2531,27 +2552,30 @@ function render() {
         </div>
         ${resizeHandle(qColKey)}
       </div>`;
-      qMonths.forEach(m => {
-        const mColKey    = s.key + '_' + m;
-        const mW         = getColW(mColKey);
-        const mSortKey   = `_${s.key}_${m}`;
-        const isMSort    = sortKey === mSortKey;
-        const mSortCls   = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
-        const mArrow     = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
-        const mHasFilter = !!activeRangeFilters[mSortKey];
-        sh += `<div class="hc" style="width:${mW}px;min-width:${mW}px;padding:0 2px" data-col="${mColKey}">
-          <div class="hc-inner">
-            <span class="hc-label">${m}</span>
-            <span class="hc-icons">
-              <button class="hc-sort-btn ${mSortCls}" onclick="sortBy('${mSortKey}')" title="Sort by ${m}">${mArrow}</button>
-              <button class="hc-filter-btn ${mHasFilter?'active':''}" onclick="openRangeDrop(event,'${mSortKey}','${s.label} ${m}','${s.cls}')" title="Filter ${m}">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-              </button>
-            </span>
-          </div>
-          ${resizeHandle(mColKey)}
-        </div>`;
-      });
+
+      if (state === 'full') {
+        qMonths.forEach(m => {
+          const mColKey    = s.key + '_' + m;
+          const mW         = getColW(mColKey);
+          const mSortKey   = `_${s.key}_${m}`;
+          const isMSort    = sortKey === mSortKey;
+          const mSortCls   = isMSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
+          const mArrow     = isMSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
+          const mHasFilter = !!activeRangeFilters[mSortKey];
+          sh += `<div class="hc" style="width:${mW}px;min-width:${mW}px;padding:0 2px" data-col="${mColKey}" data-metric-sec="${s.key}">
+            <div class="hc-inner">
+              <span class="hc-label">${m}</span>
+              <span class="hc-icons">
+                <button class="hc-sort-btn ${mSortCls}" onclick="sortBy('${mSortKey}')" title="Sort by ${m}">${mArrow}</button>
+                <button class="hc-filter-btn ${mHasFilter?'active':''}" onclick="openRangeDrop(event,'${mSortKey}','${s.label} ${m}','${s.cls}')" title="Filter ${m}">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </button>
+              </span>
+            </div>
+            ${resizeHandle(mColKey)}
+          </div>`;
+        });
+      }
     });
   });
 
@@ -2652,9 +2676,12 @@ function render() {
       const isPulling = r._pulling;
       const qTotals = calcQ(r, s.key);
       const totW = getColW(s.key+'_tot');
+      const state = getMetricState(s.key);
 
       rows += `<div class="sc tot-cell" style="width:${totW}px;min-width:${totW}px" data-col="${s.key}_tot">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling?'…':(tot?fmt(tot):'—')}</span></div>`;
+
+      if (state === 'total') return;
 
       Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
         const qVal  = qTotals[qLabel] || 0;
@@ -2662,14 +2689,17 @@ function render() {
         const qW    = getColW(qCKey);
         rows += `<div class="sc tot-cell" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.08)" data-col="${qCKey}">
           <span class="c-val mono ${qVal?'':'dim'}">${isPulling?'…':(qVal?fmt(qVal):'—')}</span></div>`;
-        qMonths.forEach(m => {
-          const v    = (r[s.key]||{})[m]||0;
-          const mCKey = s.key + '_' + m;
-          const mW   = getColW(mCKey);
-          rows += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
-          rows += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
-          rows += `</div>`;
-        });
+
+        if (state === 'full') {
+          qMonths.forEach(m => {
+            const v    = (r[s.key]||{})[m]||0;
+            const mCKey = s.key + '_' + m;
+            const mW   = getColW(mCKey);
+            rows += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
+            rows += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
+            rows += `</div>`;
+          });
+        }
       });
     });
 
