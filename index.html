@@ -1394,11 +1394,18 @@ const OFFBOARD_SOURCE = { k:'offboard_source', label:'ที่มา',         
 const OFFBOARD_DATE   = { k:'offboard_date',   label:'วันที่ Offboard', w:120 };
 
 // ── METRIC SECTIONS ──
+const LISTING_SUBS = [
+  { key:'listing_std',   label:'STD',       cls:'sec-lst' },
+  { key:'listing_r2s',   label:'R2S',       cls:'sec-lst' },
+  { key:'listing_inter', label:'STD-INTER', cls:'sec-lst' },
+  { key:'listing_pre',   label:'PRE',       cls:'sec-lst' },
+];
+
 const MONTHLY_SECS_DEFAULT = [
-  { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110, sortKey:'_gmv_tot',     filterKey:'_gmv_tot'     },
-  { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85,  sortKey:'_orders_tot',  filterKey:'_orders_tot'  },
-  { key:'listing', label:'New listing',   cls:'sec-lst',  mw:85,  sortKey:'_listing_tot', filterKey:'_listing_tot' },
-  { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85,  sortKey:'_failed_tot',  filterKey:'_failed_tot'  },
+  { key:'gmv',     label:'GMV (฿)',       cls:'sec',      mw:110, sortKey:'_gmv_tot',     filterKey:'_gmv_tot',     subs:[] },
+  { key:'orders',  label:'Orders',        cls:'sec-ord',  mw:85,  sortKey:'_orders_tot',  filterKey:'_orders_tot',  subs:[] },
+  { key:'listing', label:'New listing',   cls:'sec-lst',  mw:85,  sortKey:'_listing_tot', filterKey:'_listing_tot', subs:LISTING_SUBS },
+  { key:'failed',  label:'Failed orders', cls:'sec-fail', mw:85,  sortKey:'_failed_tot',  filterKey:'_failed_tot',  subs:[] },
 ];
 
 // Load saved metric order
@@ -1606,15 +1613,15 @@ function clearRangeFilter() {
 // Handles: _gmv_tot, _gmv_Q1, _gmv_Jan, _orders_Q2, _failed_Mar, etc.
 function getSortVal(r, key) {
   if (!key || !key.startsWith('_')) return 0;
-  const METRIC_KEYS = ['gmv','orders','listing','failed'];
-  const inner = key.slice(1); // remove leading '_'
-  // Check for _<metric>_tot
+  // Order matters: longer keys first to avoid prefix conflicts
+  const METRIC_KEYS = ['listing_inter','listing_std','listing_r2s','listing_pre','gmv','orders','listing','failed'];
+  const inner = key.slice(1);
   for (const mk of METRIC_KEYS) {
     if (inner === mk + '_tot') {
       return Object.values(r[mk]||{}).reduce((a,b)=>a+(+b||0),0);
     }
     if (inner.startsWith(mk + '_')) {
-      const period = inner.slice(mk.length + 1); // 'Q1' or 'Jan'
+      const period = inner.slice(mk.length + 1);
       if (QUARTERS[period]) {
         return QUARTERS[period].reduce((a,m)=>a+((r[mk]||{})[m]||0), 0);
       }
@@ -2066,8 +2073,8 @@ function gmvTot(r){ return Object.values(r.gmv||{}).reduce((a,b)=>a+(+b||0),0); 
 const COL_DEFAULT_WIDTHS = {};
 ALL_COLS_META.forEach(c => { COL_DEFAULT_WIDTHS[c.k] = c.w; });
 // Metric columns
-['gmv','orders','listing','failed'].forEach(mk => {
-  COL_DEFAULT_WIDTHS[mk+'_tot'] = mk==='gmv' ? 130 : 130;
+['gmv','orders','listing','listing_std','listing_r2s','listing_inter','listing_pre','failed'].forEach(mk => {
+  COL_DEFAULT_WIDTHS[mk+'_tot'] = 140;
   ['Q1','Q2','Q3','Q4'].forEach(q => { COL_DEFAULT_WIDTHS[mk+'_'+q] = 100; });
   ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach(m => {
     COL_DEFAULT_WIDTHS[mk+'_'+m] = mk==='gmv' ? 110 : 85;
@@ -2188,30 +2195,30 @@ function resizeHandle(colKey) {
 
 // ── Build metric section header (sortable + range filterable) ──
 function makeMetricHC(s) {
-  const w       = getColW(s.key + '_tot');
+  const w       = Math.max(getColW(s.key + '_tot'), 140); // min 140px for total header
   const isSort    = sortKey === s.sortKey;
   const hasFilter = !!activeRangeFilters[s.filterKey];
   const sortCls   = isSort ? (sortDir === 1 ? 'asc' : 'desc') : '';
   const sortArrow = isSort ? (sortDir === 1 ? '↑' : '↓') : '↕';
   const state     = getMetricState(s.key);
   const stateIcon = state === 'full' ? '◀' : state === 'quarters' ? '▶' : '▶▶';
-  const stateTitle = state === 'full' ? 'คลิกเพื่อแสดงแค่ Q' : state === 'quarters' ? 'คลิกเพื่อแสดงแค่ Total' : 'คลิกเพื่อแสดงทั้งหมด';
+  const stateTitle = state === 'full' ? 'แสดงแค่ Q' : state === 'quarters' ? 'แสดงแค่ Total' : 'แสดงทั้งหมด';
 
-  return `<div class="hc ${s.cls}" style="width:${w}px;min-width:${w}px;padding:0 4px" data-col="${s.key}_tot" data-metric-sec="${s.key}">
-    <span class="metric-drag-handle" onmousedown="startMetricSecDrag(event,'${s.key}')" title="ลากเพื่อเรียงใหม่">
+  return `<div class="hc ${s.cls}" style="width:${w}px;min-width:${w}px;padding:0 6px;height:36px" data-col="${s.key}_tot" data-metric-sec="${s.key}">
+    <span class="metric-drag-handle" onmousedown="startMetricSecDrag(event,'${s.key}')" title="ลากเพื่อเรียงใหม่" style="margin-right:4px">
       <svg width="8" height="12" viewBox="0 0 8 12" fill="none"><circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="6" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="6" r="1.2" fill="currentColor"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/><circle cx="2" cy="10" r="1.2" fill="currentColor"/><circle cx="6" cy="10" r="1.2" fill="currentColor"/></svg>
     </span>
-    <div class="hc-inner" style="flex:1">
-      <span class="hc-label" style="display:flex;flex-direction:column;gap:1px">
-        <span style="${isSort?'font-weight:700':''}">${s.label}</span>
+    <div class="hc-inner" style="flex:1;min-width:0">
+      <span class="hc-label" style="display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden">
+        <span style="${isSort?'font-weight:700':''}; white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.label}</span>
         <span style="font-size:8px;letter-spacing:.5px;opacity:.7">TOTAL</span>
       </span>
-      <span class="hc-icons">
+      <span class="hc-icons" style="flex-shrink:0;gap:1px">
         <button class="hc-sort-btn ${sortCls}" onclick="sortBy('${s.sortKey}')" title="Sort">${sortArrow}</button>
         <button class="hc-filter-btn ${hasFilter?'active':''}" onclick="openRangeDrop(event,'${s.filterKey}','${s.label}','${s.cls}')" title="Filter">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         </button>
-        <button class="hc-filter-btn" onclick="cycleMetricState('${s.key}')" title="${stateTitle}" style="font-size:9px;width:20px">${stateIcon}</button>
+        <button class="hc-filter-btn" onclick="cycleMetricState('${s.key}')" title="${stateTitle}" style="font-size:9px;width:22px;padding:0">${stateIcon}</button>
       </span>
     </div>
     ${resizeHandle(s.key + '_tot')}
@@ -2530,7 +2537,28 @@ function render() {
   MONTHLY_SECS.forEach(s => {
     sh += makeMetricHC(s);
     const state = getMetricState(s.key);
-    if (state === 'total') return; // only show total col
+    if (state === 'total') return;
+
+    // Helper: build sub-metric total header
+    const makeSubHC = (sub) => {
+      const sw = getColW(sub.key+'_tot');
+      const sk = `_${sub.key}_tot`;
+      const isS = sortKey === sk;
+      const sc  = isS ? (sortDir===1?'asc':'desc') : '';
+      const sa  = isS ? (sortDir===1?'↑':'↓') : '↕';
+      return `<div class="hc ${sub.cls}" style="width:${sw}px;min-width:${sw}px;padding:0 6px;border-left:1px dashed rgba(0,0,0,.15);opacity:.85" data-col="${sub.key}_tot">
+        <div class="hc-inner">
+          <span class="hc-label" style="font-size:9px">${sub.label}</span>
+          <span class="hc-icons"><button class="hc-sort-btn ${sc}" onclick="sortBy('${sk}')">${sa}</button></span>
+        </div>
+        ${resizeHandle(sub.key+'_tot')}
+      </div>`;
+    };
+
+    // Total sub-columns
+    if (s.subs && s.subs.length) {
+      s.subs.forEach(sub => { sh += makeSubHC(sub); });
+    }
 
     Object.entries(QUARTERS).forEach(([qLabel, qMonths]) => {
       const qColKey    = s.key + '_' + qLabel;
@@ -2553,6 +2581,25 @@ function render() {
         ${resizeHandle(qColKey)}
       </div>`;
 
+      // Q sub-columns
+      if (s.subs && s.subs.length) {
+        s.subs.forEach(sub => {
+          const sqk = sub.key+'_'+qLabel;
+          const sqW = getColW(sqk);
+          const ssk = `_${sub.key}_${qLabel}`;
+          const iss = sortKey===ssk;
+          const ssc = iss?(sortDir===1?'asc':'desc'):'';
+          const ssa = iss?(sortDir===1?'↑':'↓'):'↕';
+          sh += `<div class="hc ${sub.cls}" style="width:${sqW}px;min-width:${sqW}px;padding:0 4px;border-left:1px dashed rgba(0,0,0,.15);opacity:.85" data-col="${sqk}">
+            <div class="hc-inner">
+              <span class="hc-label" style="font-size:9px">${sub.label}</span>
+              <span class="hc-icons"><button class="hc-sort-btn ${ssc}" onclick="sortBy('${ssk}')">${ssa}</button></span>
+            </div>
+            ${resizeHandle(sqk)}
+          </div>`;
+        });
+      }
+
       if (state === 'full') {
         qMonths.forEach(m => {
           const mColKey    = s.key + '_' + m;
@@ -2574,6 +2621,25 @@ function render() {
             </div>
             ${resizeHandle(mColKey)}
           </div>`;
+
+          // Month sub-columns
+          if (s.subs && s.subs.length) {
+            s.subs.forEach(sub => {
+              const smk = sub.key+'_'+m;
+              const smW = getColW(smk);
+              const ssk = `_${sub.key}_${m}`;
+              const iss = sortKey===ssk;
+              const ssc = iss?(sortDir===1?'asc':'desc'):'';
+              const ssa = iss?(sortDir===1?'↑':'↓'):'↕';
+              sh += `<div class="hc ${sub.cls}" style="width:${smW}px;min-width:${smW}px;padding:0 2px;border-left:1px dashed rgba(0,0,0,.15);opacity:.85" data-col="${smk}">
+                <div class="hc-inner">
+                  <span class="hc-label" style="font-size:9px">${sub.label}</span>
+                  <span class="hc-icons"><button class="hc-sort-btn ${ssc}" onclick="sortBy('${ssk}')">${ssa}</button></span>
+                </div>
+                ${resizeHandle(smk)}
+              </div>`;
+            });
+          }
         });
       }
     });
@@ -2678,8 +2744,19 @@ function render() {
       const totW = getColW(s.key+'_tot');
       const state = getMetricState(s.key);
 
+      // Total (All)
       rows += `<div class="sc tot-cell" style="width:${totW}px;min-width:${totW}px" data-col="${s.key}_tot">
         <span class="c-val mono ${tot?'':'dim'}">${isPulling?'…':(tot?fmt(tot):'—')}</span></div>`;
+
+      // Total sub-columns
+      if (s.subs && s.subs.length) {
+        s.subs.forEach(sub => {
+          const sv = Object.values(r[sub.key]||{}).reduce((a,b)=>a+(+b||0),0);
+          const sw = getColW(sub.key+'_tot');
+          rows += `<div class="sc tot-cell" style="width:${sw}px;min-width:${sw}px;border-left:1px dashed rgba(0,0,0,.1)" data-col="${sub.key}_tot">
+            <span class="c-val mono ${sv?'':'dim'}" style="opacity:.8">${isPulling?'…':(sv?fmt(sv):'—')}</span></div>`;
+        });
+      }
 
       if (state === 'total') return;
 
@@ -2690,14 +2767,36 @@ function render() {
         rows += `<div class="sc tot-cell" style="width:${qW}px;min-width:${qW}px;border-left:2px solid rgba(0,0,0,.08)" data-col="${qCKey}">
           <span class="c-val mono ${qVal?'':'dim'}">${isPulling?'…':(qVal?fmt(qVal):'—')}</span></div>`;
 
+        // Q sub-columns
+        if (s.subs && s.subs.length) {
+          s.subs.forEach(sub => {
+            const sqTotals = calcQ(r, sub.key);
+            const sqv = sqTotals[qLabel] || 0;
+            const sqk = sub.key+'_'+qLabel;
+            const sqW = getColW(sqk);
+            rows += `<div class="sc tot-cell" style="width:${sqW}px;min-width:${sqW}px;border-left:1px dashed rgba(0,0,0,.1)" data-col="${sqk}">
+              <span class="c-val mono ${sqv?'':'dim'}" style="opacity:.8">${isPulling?'…':(sqv?fmt(sqv):'—')}</span></div>`;
+          });
+        }
+
         if (state === 'full') {
           qMonths.forEach(m => {
             const v    = (r[s.key]||{})[m]||0;
             const mCKey = s.key + '_' + m;
             const mW   = getColW(mCKey);
-            rows += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">`;
-            rows += `<span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span>`;
-            rows += `</div>`;
+            rows += `<div class="sc" style="width:${mW}px;min-width:${mW}px" data-col="${mCKey}">
+              <span class="m-num ${v?'':'z'}">${isPulling?'…':(v?fmt(v):'—')}</span></div>`;
+
+            // Month sub-columns
+            if (s.subs && s.subs.length) {
+              s.subs.forEach(sub => {
+                const sv2 = (r[sub.key]||{})[m]||0;
+                const smk = sub.key+'_'+m;
+                const smW = getColW(smk);
+                rows += `<div class="sc" style="width:${smW}px;min-width:${smW}px;border-left:1px dashed rgba(0,0,0,.1)" data-col="${smk}">
+                  <span class="m-num ${sv2?'':'z'}" style="opacity:.8">${isPulling?'…':(sv2?fmt(sv2):'—')}</span></div>`;
+              });
+            }
           });
         }
       });
