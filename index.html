@@ -2742,9 +2742,15 @@ let _lastSyncHash = '';
 async function syncSheet(force) {
   const url = document.getElementById('scriptUrl').value.trim();
   if(!url) { toast('กรุณาใส่ Apps Script URL ก่อน','err'); return; }
+  // When force=true (manual Save to Sheet), always sync regardless of hash
+  // to ensure deletions and empty arrays are sent to Sheet
+  if (!force) {
+    const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(xbData.length)+
+                 JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id))+JSON.stringify(xbData.map(r=>r._id));
+    if (hash === _lastSyncHash) { toast('ไม่มีการเปลี่ยนแปลง'); return; }
+  }
   const hash = JSON.stringify(vData.length)+JSON.stringify(oData.length)+JSON.stringify(xbData.length)+
                JSON.stringify(vData.map(r=>r._id))+JSON.stringify(oData.map(r=>r._id))+JSON.stringify(xbData.map(r=>r._id));
-  if (!force && hash === _lastSyncHash) { toast('ไม่มีการเปลี่ยนแปลง'); return; }
   _lastSyncHash = hash;
   toast('กำลัง Sync…');
   try {
