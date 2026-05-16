@@ -346,7 +346,7 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .tgt-block-title{font-size:13px;font-weight:600;color:var(--ink)}
 .tgt-q-badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent}
 .tgt-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:var(--sh-sm)}
-.tgt-tbl{border-collapse:collapse;font-size:11px;min-width:700px;width:100%;background:var(--surface)}
+.tgt-tbl{border-collapse:collapse;font-size:11px;min-width:700px;background:var(--surface)}
 .tgt-tbl th,.tgt-tbl td{padding:5px 10px;text-align:right;white-space:nowrap}
 .tgt-tbl th{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--border);background:#fafaf8}
 .tgt-tbl th:first-child,.tgt-tbl td:first-child{text-align:left;min-width:155px;max-width:200px;padding-left:14px}
@@ -2151,7 +2151,8 @@ function renderTgtSet(){
   const blk=tgtFor==='overall'?tgtData.overall:(tgtData.bySeller[tgtFor]||{});
 
   populateTgtSetFor();
-  const nonFocus=rows.filter(r=>!tgtData.focusSellers.includes(r.email));
+  const allRows=vData.filter(r=>!kamVal||r.kam===kamVal);
+  const nonFocus=allRows.filter(r=>!tgtData.focusSellers.includes(r.email));
 
   let html=`<div class="tgt-section">
     <div class="tgt-sec-title">Focus Sellers</div>
