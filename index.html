@@ -345,11 +345,11 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .tgt-block-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .tgt-block-title{font-size:13px;font-weight:600;color:var(--ink)}
 .tgt-q-badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent}
-.tgt-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:var(--sh-sm)}
-.tgt-tbl{border-collapse:collapse;font-size:11px;min-width:700px;background:var(--surface)}
-.tgt-tbl th,.tgt-tbl td{padding:5px 10px;text-align:right;white-space:nowrap}
-.tgt-tbl th{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--border);background:#fafaf8}
-.tgt-tbl th:first-child,.tgt-tbl td:first-child{text-align:left;min-width:155px;max-width:200px;padding-left:14px}
+.tgt-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:var(--sh-sm);width:100%}
+.tgt-tbl{border-collapse:collapse;font-size:12px;white-space:nowrap;background:var(--surface)}
+.tgt-tbl th,.tgt-tbl td{padding:7px 12px;text-align:right;white-space:nowrap}
+.tgt-tbl th{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--border);background:#fafaf8}
+.tgt-tbl th:first-child,.tgt-tbl td:first-child{text-align:left;min-width:160px;padding-left:16px}
 .tgt-tbl tbody tr:hover td{background:#fafaf8}
 .tgt-tbl td{border-bottom:1px solid var(--border)}
 .tgt-tbl .r0>td{font-weight:600;color:var(--ink)}
@@ -1933,7 +1933,7 @@ if(!vData.length&&!oData.length&&!xbData.length)setTimeout(()=>loadFromSheet(fal
 /* ═══════════════════════════════════════
    TARGET TRACKER v3
 ═══════════════════════════════════════ */
-let tgtData={ver:3,statusFilter:'focus',overall:{},bySeller:{},focusSellers:[]};
+let tgtData={ver:3,statusFilter:'',overall:{},bySeller:{},focusSellers:[]};
 let tgtSubTab='progress',tgtQ='Q2',tgtSetQ='Q2';
 
 function loadTgt(){
@@ -1941,7 +1941,7 @@ function loadTgt(){
   if(!tgtData.overall)tgtData.overall={};
   if(!tgtData.bySeller)tgtData.bySeller={};
   if(!tgtData.focusSellers)tgtData.focusSellers=[];
-  if(tgtData.statusFilter===undefined)tgtData.statusFilter='focus';
+  if(tgtData.statusFilter===undefined)tgtData.statusFilter='';
 }
 function saveTgt(){localStorage.setItem('tgt28',JSON.stringify(tgtData));}
 
@@ -1976,11 +1976,12 @@ function initTgtView(){
 
 function populateTgtSetFor(){
   const el=document.getElementById('tgtSetFor');if(!el)return;
-  const rows=getTgtRows('');
+  const kamVal=document.getElementById('tgtSetKamSel')?.value||'';
+  const allRows=kamVal?vData.filter(r=>r.kam===kamVal):vData;
   el.innerHTML='<option value="overall">Overall</option>'+
-    tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e)).map(e=>{
-      const r=rows.find(x=>x.email===e)||{};
-      return`<option value="${e}">${r.name_th||r.shop||e}</option>`;
+    tgtData.focusSellers.filter(e=>allRows.some(r=>r.email===e)).map(e=>{
+      const r=allRows.find(x=>x.email===e)||{};
+      return`<option value="${e}">${selLabel(r)}</option>`;
     }).join('');
 }
 
@@ -2142,40 +2143,52 @@ function renderTgtProgress(){
     '<div style="padding:40px;text-align:center;color:var(--ink4)">No data for current filter</div>';
 }
 
+function selLabel(r){return`${r.name_en||r.name_th||r.shop||r.email} (${r.email})`;}
+
 function renderTgtSet(){
   tgtSetQ=document.getElementById('tgtSetQSel')?.value||tgtSetQ;
   const kamVal=document.getElementById('tgtSetKamSel')?.value||'';
   const tgtFor=document.getElementById('tgtSetFor')?.value||'overall';
   const months=QUARTERS[tgtSetQ];
+
+  if(!kamVal){
+    document.getElementById('tgtSetContent').innerHTML=
+      '<div style="padding:40px;text-align:center;color:var(--ink4);font-size:12px">Please select a KAM first</div>';
+    return;
+  }
+
+  const allRows=vData.filter(r=>r.kam===kamVal);
   const rows=getTgtRows(kamVal);
   const blk=tgtFor==='overall'?tgtData.overall:(tgtData.bySeller[tgtFor]||{});
 
   populateTgtSetFor();
-  const allRows=vData.filter(r=>!kamVal||r.kam===kamVal);
   const nonFocus=allRows.filter(r=>!tgtData.focusSellers.includes(r.email));
 
   let html=`<div class="tgt-section">
-    <div class="tgt-sec-title">Focus Sellers</div>
+    <div class="tgt-sec-title">Focus Sellers — ${kamVal}</div>
     <div class="tgt-add-row">
       <select class="tgt-add-in" id="addFocusSel">
         <option value="">— Add focus seller —</option>
-        ${nonFocus.map(r=>`<option value="${r.email}">${r.name_th||r.shop||r.email}</option>`).join('')}
+        ${nonFocus.map(r=>`<option value="${r.email}">${selLabel(r)}</option>`).join('')}
       </select>
       <button class="tgt-add-btn" onclick="addFocusSeller()">+ Add</button>
     </div>
-    <div class="focus-chips">${tgtData.focusSellers.length?tgtData.focusSellers.map(e=>{
-      const r=rows.find(x=>x.email===e)||{};
-      return`<span class="focus-chip">${r.name_th||r.shop||e}<button onclick="removeFocus('${e}')">×</button></span>`;
-    }).join(''):'<span style="font-size:11px;color:var(--ink4)">No focus sellers yet</span>'}</div>
+    <div class="focus-chips">${tgtData.focusSellers.filter(e=>allRows.some(r=>r.email===e)).length?
+      tgtData.focusSellers.filter(e=>allRows.some(r=>r.email===e)).map(e=>{
+        const r=allRows.find(x=>x.email===e)||{};
+        return`<span class="focus-chip">${selLabel(r)}<button onclick="removeFocus('${e}')">×</button></span>`;
+      }).join(''):'<span style="font-size:11px;color:var(--ink4)">No focus sellers for this KAM yet</span>'}
+    </div>
   </div>`;
 
   const defs=buildRowDefs(rows);
-  const forLabel=tgtFor==='overall'?'Overall':(rows.find(r=>r.email===tgtFor)?.name_th||tgtFor);
+  const forR=allRows.find(r=>r.email===tgtFor);
+  const forLabel=tgtFor==='overall'?'Overall':(forR?selLabel(forR):tgtFor);
   html+=`<div class="tgt-section">
     <div class="tgt-sec-title">Set Targets — ${forLabel} — ${tgtSetQ}</div>
-    <table class="tgt-set-tbl"><thead><tr>
+    <div style="overflow-x:auto"><table class="tgt-set-tbl"><thead><tr>
       <th>Metric / Group</th>
-      ${months.map(m=>`<th>${m}</th>`).join('')}
+      ${months.map(m=>`<th style="min-width:90px">${m}</th>`).join('')}
     </tr></thead><tbody>`;
 
   defs.forEach(rd=>{
@@ -2189,7 +2202,7 @@ function renderTgtSet(){
     html+=`</tr>`;
   });
 
-  html+=`</tbody></table></div>`;
+  html+=`</tbody></table></div></div>`;
   document.getElementById('tgtSetContent').innerHTML=html;
 }
 
