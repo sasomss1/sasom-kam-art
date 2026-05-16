@@ -881,7 +881,10 @@ async function fetchFromSourceSheet(){
     const cleanText=text.replace(/^﻿/,'');
     const rows=parseCSV(cleanText);
     if(rows.length<2){toast('No data in sheet','err');return;}
-    const hdr=rows[0].map(h=>h.trim().toLowerCase().replace(/\s+/g,' '));
+    // find header row — look for row containing 'email'
+    let hdrIdx=rows.findIndex(r=>r.some(c=>(c||'').toLowerCase().includes('email')));
+    if(hdrIdx===-1)hdrIdx=0;
+    const hdr=rows[hdrIdx].map(h=>h.trim().toLowerCase().replace(/\s+/g,' '));
     console.log('Source sheet headers:',hdr);
     // flexible column finder — partial match fallback
     const ci=(name)=>{
