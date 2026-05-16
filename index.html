@@ -330,48 +330,54 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .vis-act-btn{flex:1;height:24px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:10px;font-family:inherit;cursor:pointer;background:var(--bg);color:var(--ink3)}
 .vis-act-btn:hover{border-color:var(--border2);color:var(--ink)}
 
-/* ── Target tab ── */
+/* ── Target tracker v3 ── */
 .tgt-view{display:none;flex:1;overflow-y:auto;padding:20px 24px;background:var(--bg)}
 .tgt-view.on{display:block}
-.tgt-stab-strip{display:flex;gap:6px;margin-bottom:18px}
-.tgt-stab{padding:6px 18px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border2);background:none;cursor:pointer;font-family:inherit;color:var(--ink3);transition:all .15s}
-.tgt-stab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.tgt-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.tgt-sel{padding:5px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border2);background:var(--surface);font-family:inherit;color:var(--ink);outline:none;cursor:pointer}
-.tgt-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px}
-.tgt-sec-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;opacity:.6}
-.tgt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:14px}
-/* progress cards */
-.prog-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
-.prog-card-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:12px;display:flex;justify-content:space-between}
-.prog-row{margin-bottom:10px}
-.prog-hd{display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px}
-.prog-lbl{color:var(--ink3);font-weight:500}
-.prog-num{color:var(--ink2);font-variant-numeric:tabular-nums}
-.prog-bar-bg{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:3px}
-.prog-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
-.prog-ft{display:flex;gap:8px;font-size:10px;flex-wrap:wrap}
-.prog-pct{font-weight:700}
-.prog-lack{color:var(--ink4)}
-.prog-wk{color:#d97706;font-weight:500}
-/* set-target form */
-.tgt-form-hd{display:grid;gap:6px;align-items:center;margin-bottom:4px;font-size:10px;color:var(--ink4);font-weight:600;letter-spacing:.5px}
-.tgt-form-hd.overall{grid-template-columns:1fr 1fr 1fr auto}
-.tgt-form-hd.seller{grid-template-columns:200px 1fr 1fr 1fr auto auto}
-.tgt-form-hd.cat{grid-template-columns:200px 1fr 1fr 1fr auto}
-.tgt-form-row{display:grid;gap:6px;align-items:center;margin-bottom:6px}
-.tgt-form-row.overall{grid-template-columns:1fr 1fr 1fr auto}
-.tgt-form-row.seller{grid-template-columns:200px 1fr 1fr 1fr auto auto}
-.tgt-form-row.cat{grid-template-columns:200px 1fr 1fr 1fr auto}
-.tgt-in{border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:11px;font-family:inherit;color:var(--ink);background:var(--surface);width:100%;outline:none;box-sizing:border-box}
-.tgt-in:focus{border-color:var(--ink3)}
-.tgt-lbl{font-size:11px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tgt-save-btn{padding:4px 10px;border-radius:6px;font-size:10px;border:none;background:var(--ink);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap}
-.tgt-rem-btn{padding:4px 8px;border-radius:6px;font-size:10px;border:1px solid #fca5a5;background:#fff1f2;color:#e11d48;cursor:pointer;font-family:inherit}
+.tgt-stab-strip{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.tgt-stab{padding:7px 20px;border:none;background:none;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tgt-stab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.tgt-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tgt-sel{padding:5px 10px;border-radius:7px;font-size:11px;border:1px solid var(--border2);background:var(--surface);font-family:inherit;color:var(--ink);outline:none;cursor:pointer}
+.sf-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.sf-chip{padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid var(--border2);cursor:pointer;background:var(--bg);color:var(--ink3);transition:all .12s;white-space:nowrap}
+.sf-chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tgt-block{margin-bottom:28px}
+.tgt-block-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tgt-block-title{font-size:13px;font-weight:600;color:var(--ink)}
+.tgt-q-badge{padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent}
+.tgt-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:var(--sh-sm)}
+.tgt-tbl{border-collapse:collapse;font-size:11px;min-width:700px;width:100%;background:var(--surface)}
+.tgt-tbl th,.tgt-tbl td{padding:5px 10px;text-align:right;white-space:nowrap}
+.tgt-tbl th{font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--border);background:#fafaf8}
+.tgt-tbl th:first-child,.tgt-tbl td:first-child{text-align:left;min-width:155px;max-width:200px;padding-left:14px}
+.tgt-tbl tbody tr:hover td{background:#fafaf8}
+.tgt-tbl td{border-bottom:1px solid var(--border)}
+.tgt-tbl .r0>td{font-weight:600;color:var(--ink)}
+.tgt-tbl .r1>td{color:var(--ink2)}
+.tgt-tbl .r1>td:first-child{padding-left:22px}
+.tgt-tbl .r2>td{color:var(--ink3);font-size:10px}
+.tgt-tbl .r2>td:first-child{padding-left:36px}
+.tgt-tbl .sep{border-left:2px solid var(--border)!important}
+.tgt-tbl .tot{font-weight:600!important;background:#f5f0eb!important}
+.tgt-tbl .ph th{text-align:center;font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink2);padding:7px 10px;border-bottom:2px solid var(--border)}
+.tgt-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.tgt-sec-title{font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px}
 .tgt-add-row{display:flex;gap:8px;margin-bottom:12px}
-.tgt-add-in{flex:1;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;font-family:inherit;color:var(--ink);background:var(--surface);outline:none}
+.tgt-add-in{flex:1;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:11px;font-family:inherit;color:var(--ink);background:var(--surface);outline:none}
 .tgt-add-btn{padding:5px 14px;border-radius:6px;font-size:11px;border:1px solid var(--ink3);background:none;color:var(--ink2);cursor:pointer;font-family:inherit}
-.tgt-kam-header{font-size:11px;font-weight:600;color:var(--ink3);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.tgt-rem-btn{padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid #fca5a5;background:#fff1f2;color:#e11d48;cursor:pointer;font-family:inherit}
+.focus-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.focus-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:var(--surface);border:1px solid var(--border2);color:var(--ink2)}
+.focus-chip button{border:none;background:none;cursor:pointer;color:var(--ink4);font-size:14px;line-height:1;padding:0;margin-left:2px}
+.tgt-set-tbl{border-collapse:collapse;font-size:11px;width:100%}
+.tgt-set-tbl th{text-align:right;font-size:10px;font-weight:700;color:var(--ink4);padding:4px 8px;border-bottom:1px solid var(--border);letter-spacing:.3px;white-space:nowrap}
+.tgt-set-tbl th:first-child{text-align:left;min-width:160px}
+.tgt-set-tbl td{padding:3px 4px;border-bottom:1px solid var(--border)}
+.tgt-set-tbl td:first-child{font-size:11px;color:var(--ink2);padding:4px 10px;text-align:left;white-space:nowrap}
+.tgt-set-tbl .sl1 td:first-child{padding-left:22px;color:var(--ink3)}
+.tgt-set-tbl .sl2 td:first-child{padding-left:36px;color:var(--ink4);font-size:10px}
+.tgt-num-in{width:80px;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:11px;font-family:inherit;color:var(--ink);text-align:right;background:var(--surface);outline:none}
+.tgt-num-in:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(13,148,136,.12)}
 </style>
 </head>
 <body>
@@ -549,20 +555,36 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
     <button class="tgt-stab" id="tst-set" onclick="switchTgtTab('set')">Set Targets</button>
   </div>
 
-  <!-- PROGRESS SUB-TAB -->
+  <!-- PROGRESS -->
   <div id="tgtProgressDiv">
     <div class="tgt-toolbar">
-      <select class="tgt-sel" id="tgtKamSel" onchange="tgtKAM=this.value;renderTgtProgress()"><option value="">— All KAMs —</option></select>
-      <select class="tgt-sel" id="tgtMonthSel" onchange="tgtMonth=this.value;renderTgtProgress()"><option value="">— Select Month —</option></select>
-      <input type="date" class="tgt-sel" id="tgtEndDate" style="font-size:12px" onchange="renderTgtProgress()" title="Target end date (for weekly calc)">
+      <select class="tgt-sel" id="tgtKamSel" onchange="renderTgtProgress()"><option value="">— All KAMs —</option></select>
+      <select class="tgt-sel" id="tgtQSel" onchange="tgtQ=this.value;renderTgtProgress()">
+        <option value="Q1">Q1 (Jan–Mar)</option>
+        <option value="Q2" selected>Q2 (Apr–Jun)</option>
+        <option value="Q3">Q3 (Jul–Sep)</option>
+        <option value="Q4">Q4 (Oct–Dec)</option>
+      </select>
+      <input type="date" class="tgt-sel" id="tgtEndDate" title="End date for weekly calc" onchange="renderTgtProgress()">
+      <span style="font-size:11px;color:var(--ink3)">Status:</span>
+      <div class="sf-chips" id="sfChips"></div>
     </div>
     <div id="tgtProgressContent"></div>
   </div>
 
-  <!-- SET TARGET SUB-TAB -->
+  <!-- SET TARGETS -->
   <div id="tgtSetDiv" style="display:none">
     <div class="tgt-toolbar">
-      <select class="tgt-sel" id="tgtSetKamSel" onchange="renderTgtSet()"><option value="">— Select KAM —</option></select>
+      <select class="tgt-sel" id="tgtSetKamSel" onchange="renderTgtSet()"><option value="">— All KAMs —</option></select>
+      <select class="tgt-sel" id="tgtSetQSel" onchange="tgtSetQ=this.value;renderTgtSet()">
+        <option value="Q1">Q1 (Jan–Mar)</option>
+        <option value="Q2" selected>Q2 (Apr–Jun)</option>
+        <option value="Q3">Q3 (Jul–Sep)</option>
+        <option value="Q4">Q4 (Oct–Dec)</option>
+      </select>
+      <select class="tgt-sel" id="tgtSetFor" onchange="renderTgtSet()">
+        <option value="overall">Overall</option>
+      </select>
     </div>
     <div id="tgtSetContent"></div>
   </div>
@@ -1909,48 +1931,71 @@ load();render();
 if(!vData.length&&!oData.length&&!xbData.length)setTimeout(()=>loadFromSheet(false),300);
 
 /* ═══════════════════════════════════════
-   TARGET TRACKER
+   TARGET TRACKER v3
 ═══════════════════════════════════════ */
-let tgtData={kam:{},seller:{},category:{},focusSellers:[]};
-let tgtSubTab='progress',tgtKAM='',tgtMonth='';
+let tgtData={ver:3,statusFilter:'focus',overall:{},bySeller:{},focusSellers:[]};
+let tgtSubTab='progress',tgtQ='Q2',tgtSetQ='Q2';
 
 function loadTgt(){
-  try{tgtData=JSON.parse(localStorage.getItem('tgt27')||'{}');}catch(e){}
-  if(!tgtData.kam)tgtData.kam={};
-  if(!tgtData.seller)tgtData.seller={};
-  if(!tgtData.category)tgtData.category={};
+  try{tgtData=JSON.parse(localStorage.getItem('tgt28')||'{}');}catch(e){}
+  if(!tgtData.overall)tgtData.overall={};
+  if(!tgtData.bySeller)tgtData.bySeller={};
   if(!tgtData.focusSellers)tgtData.focusSellers=[];
+  if(tgtData.statusFilter===undefined)tgtData.statusFilter='focus';
 }
-function saveTgt(){localStorage.setItem('tgt27',JSON.stringify(tgtData));}
+function saveTgt(){localStorage.setItem('tgt28',JSON.stringify(tgtData));}
+
+function autoDetectQ(){
+  let lastIdx=-1;
+  MONTHS.forEach((m,i)=>{if(vData.some(r=>((r.gmv||{})[m]||0)>0||((r.listing||{})[m]||0)>0))lastIdx=i;});
+  if(lastIdx<0)return'Q2';
+  if(lastIdx<=2)return'Q1';if(lastIdx<=5)return'Q2';if(lastIdx<=8)return'Q3';return'Q4';
+}
+function getPrevQ(q){const qs=['Q1','Q2','Q3','Q4'];return qs[(qs.indexOf(q)+3)%4];}
 
 function initTgtView(){
   loadTgt();
-  // populate KAM selectors
   const kams=[...new Set(vData.map(r=>r.kam||'').filter(Boolean))].sort();
   ['tgtKamSel','tgtSetKamSel'].forEach(id=>{
-    const sel=document.getElementById(id);if(!sel)return;
-    const cur=sel.value;
-    sel.innerHTML=(id==='tgtKamSel'?'<option value="">— All KAMs —</option>':'<option value="">— Select KAM —</option>')+
-      kams.map(k=>`<option value="${k}">${k}</option>`).join('');
-    if(kams.includes(cur))sel.value=cur;
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">— All KAMs —</option>'+kams.map(k=>`<option value="${k}">${k}</option>`).join('');
+    if(kams.includes(cur))el.value=cur;
   });
-  // populate month selector
-  const monthSel=document.getElementById('tgtMonthSel');
-  if(monthSel){
-    const usedMonths=MONTHS.filter(m=>vData.some(r=>((r.gmv||{})[m]||0)>0));
-    monthSel.innerHTML='<option value="">— Select Month —</option>'+
-      usedMonths.map(m=>`<option value="${m}">${m}</option>`).join('');
-    if(!tgtMonth&&usedMonths.length)tgtMonth=usedMonths[usedMonths.length-1];
-    monthSel.value=tgtMonth;
-  }
-  // default end date = end of current month
+  const dq=autoDetectQ();
+  if(!tgtQ||tgtQ===dq)tgtQ=dq;
+  if(!tgtSetQ)tgtSetQ=tgtQ;
+  const qSel=document.getElementById('tgtQSel');if(qSel)qSel.value=tgtQ;
+  const qSetSel=document.getElementById('tgtSetQSel');if(qSetSel)qSetSel.value=tgtSetQ;
   const edEl=document.getElementById('tgtEndDate');
-  if(edEl&&!edEl.value){
-    const now=new Date();
-    const end=new Date(now.getFullYear(),now.getMonth()+1,0);
-    edEl.value=end.toISOString().split('T')[0];
-  }
+  if(edEl&&!edEl.value){const now=new Date();const end=new Date(now.getFullYear(),now.getMonth()+1,0);edEl.value=end.toISOString().split('T')[0];}
+  renderSfChips();
+  populateTgtSetFor();
   switchTgtTab(tgtSubTab);
+}
+
+function populateTgtSetFor(){
+  const el=document.getElementById('tgtSetFor');if(!el)return;
+  const rows=getTgtRows('');
+  el.innerHTML='<option value="overall">Overall</option>'+
+    tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e)).map(e=>{
+      const r=rows.find(x=>x.email===e)||{};
+      return`<option value="${e}">${r.name_th||r.shop||e}</option>`;
+    }).join('');
+}
+
+function renderSfChips(){
+  const statuses=dynOpts.status||[];
+  const el=document.getElementById('sfChips');if(!el)return;
+  const cur=tgtData.statusFilter;
+  el.innerHTML=`<span class="sf-chip${!cur?' on':''}" onclick="setStatusFilter('')">All</span>`+
+    statuses.map(s=>`<span class="sf-chip${cur===s?' on':''}" onclick="setStatusFilter('${s}')">${s}</span>`).join('');
+}
+function setStatusFilter(s){tgtData.statusFilter=s;saveTgt();renderSfChips();if(tgtSubTab==='progress')renderTgtProgress();}
+
+function getTgtRows(kamVal){
+  const sf=tgtData.statusFilter;
+  return vData.filter(r=>(!kamVal||r.kam===kamVal)&&(!sf||r.status===sf));
 }
 
 function switchTgtTab(name){
@@ -1959,203 +2004,212 @@ function switchTgtTab(name){
   document.getElementById('tst-set').classList.toggle('on',name==='set');
   document.getElementById('tgtProgressDiv').style.display=name==='progress'?'':'none';
   document.getElementById('tgtSetDiv').style.display=name==='set'?'':'none';
-  if(name==='progress')renderTgtProgress();
-  else renderTgtSet();
+  if(name==='progress')renderTgtProgress();else renderTgtSet();
 }
 
 function weeksLeft(){
   const edEl=document.getElementById('tgtEndDate');
   if(!edEl||!edEl.value)return 4;
-  const end=new Date(edEl.value);
-  const now=new Date();
+  const end=new Date(edEl.value);const now=new Date();
   if(now>end)return 0;
   return Math.max(0.5,(end-now)/(7*24*60*60*1000));
 }
 
 function fmtN(n){
-  if(!n&&n!==0)return'—';
+  if(!n&&n!==0)return'';
   if(n>=1000000)return(n/1000000).toFixed(1)+'M';
-  if(n>=1000)return(n/1000).toFixed(0)+'K';
-  return n.toLocaleString();
+  if(n>=1000)return Math.round(n/1000)+'K';
+  return(+n).toLocaleString();
 }
 
-function progBar(actual,target,label,unit,wkLeft){
-  if(!target)return'';
-  const pct=Math.min(100,actual/target*100);
-  const remain=Math.max(0,target-actual);
-  const col=pct>=100?'#16a34a':pct>=70?'#d97706':'#e11d48';
-  const wkNeeded=wkLeft>0?Math.ceil(remain/wkLeft):null;
-  return`<div class="prog-row">
-    <div class="prog-hd"><span class="prog-lbl">${label}</span><span class="prog-num">${fmtN(actual)} / ${fmtN(target)} ${unit}</span></div>
-    <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct.toFixed(1)}%;background:${col}"></div></div>
-    <div class="prog-ft">
-      <span class="prog-pct" style="color:${col}">${pct.toFixed(0)}%</span>
-      ${remain>0?`<span class="prog-lack">Remaining: ${fmtN(remain)} ${unit}</span>`:'<span style="color:#16a34a;font-weight:600">✓ Target reached</span>'}
-      ${wkNeeded&&remain>0?`<span class="prog-wk">Need ${fmtN(wkNeeded)} ${unit}/week</span>`:''}
+/* ── Row definitions ── */
+function getGroups(rows){return[...new Set(rows.map(r=>r.group||'').filter(Boolean))].sort();}
+
+function buildRowDefs(rows){
+  const groups=getGroups(rows);
+  const defs=[];
+  defs.push({key:'listing',label:'Listing',lv:0});
+  [{k:'listing_std',l:'STD'},{k:'listing_r2s',l:'R2S'},{k:'listing_inter',l:'STD-INTER'},{k:'listing_pre',l:'PRE'}].forEach(({k,l})=>{
+    defs.push({key:k,label:l,lv:1});
+    if(k==='listing_std'||k==='listing_r2s')groups.forEach(g=>defs.push({key:k,label:g,lv:2,grp:g}));
+  });
+  defs.push({key:'gmv',label:'GMV (฿)',lv:0});
+  defs.push({key:'orders',label:'Orders',lv:0});
+  return defs;
+}
+
+function getActual(rows,rd,month){
+  if(rd.grp)return rows.filter(r=>(r.group||'')===rd.grp).reduce((a,r)=>a+((r[rd.key]||{})[month]||0),0);
+  return rows.reduce((a,r)=>a+((r[rd.key]||{})[month]||0),0);
+}
+function getTgtV(blk,rd,month){
+  if(!blk)return 0;
+  const m=blk[rd.key]||{};
+  if(rd.grp)return((m.grp||{})[rd.grp]||{})[month]||0;
+  return m[month]||0;
+}
+
+/* ── Cell renderers ── */
+function numTd(n,cls){
+  const ca=cls?` class="${cls}"`:'';
+  if(!n)return`<td${ca}><span style="color:var(--ink4)">—</span></td>`;
+  return`<td${ca} style="font-variant-numeric:tabular-nums">${fmtN(n)}</td>`;
+}
+function pctTd(act,tgt,cls){
+  const ca=cls?` class="${cls}"`:'';
+  if(!tgt)return`<td${ca}><span style="color:var(--ink4)">—</span></td>`;
+  const p=act/tgt*100;
+  const col=p>=100?'#16a34a':p>=70?'#d97706':'#e11d48';
+  return`<td${ca} style="font-weight:600;color:${col}">${p.toFixed(0)}%</td>`;
+}
+
+/* ── Tracker block ── */
+function renderTrackerBlock(title,rows,blk,curQ,prevQ){
+  const curMs=QUARTERS[curQ];const prevMs=QUARTERS[prevQ];
+  const defs=buildRowDefs(rows);
+
+  const totAct=curMs.reduce((a,m)=>a+rows.reduce((s,r)=>s+((r.listing||{})[m]||0),0),0);
+  const totTgt=curMs.reduce((a,m)=>a+getTgtV(blk,{key:'listing',lv:0},m),0);
+  const qPct=totTgt>0?Math.round(totAct/totTgt*100):null;
+  const bc=qPct===null?'var(--ink4)':qPct>=100?'#16a34a':qPct>=70?'#d97706':'#e11d48';
+  const bb=qPct===null?'var(--bg)':qPct>=100?'#f0fdf4':qPct>=70?'#fffbeb':'#fff1f2';
+
+  let h=`<div class="tgt-block">
+    <div class="tgt-block-hd">
+      <span class="tgt-block-title">${title}</span>
+      ${qPct!==null?`<span class="tgt-q-badge" style="background:${bb};color:${bc};border-color:${bc}88">${curQ}: ${qPct}%</span>`:''}
+      <span style="font-size:11px;color:var(--ink4)">${rows.length} seller${rows.length!==1?'s':''}</span>
     </div>
-  </div>`;
+    <div class="tgt-wrap"><table class="tgt-tbl"><thead>
+    <tr class="ph">
+      <th></th>
+      <th colspan="${curMs.length+1}" style="border-left:2px solid var(--border)">Target</th>
+      <th colspan="${curMs.length+1}" class="sep">Actual (MTD)</th>
+      <th colspan="${prevMs.length+1}" class="sep">% to target (${prevQ})</th>
+    </tr><tr>
+      <th></th>
+      ${curMs.map((m,i)=>`<th${i===0?' class="sep"':''}>${m}</th>`).join('')}<th class="tot">Total ${curQ}</th>
+      ${curMs.map((m,i)=>`<th${i===0?' class="sep"':''}>${m}</th>`).join('')}<th class="sep tot">Total ${curQ}</th>
+      ${prevMs.map((m,i)=>`<th${i===0?' class="sep"':''}>${m}</th>`).join('')}<th class="sep tot">Total ${prevQ}</th>
+    </tr></thead><tbody>`;
+
+  defs.forEach(rd=>{
+    let lbl=rd.label;
+    if(rd.lv===1&&rd.key.startsWith('listing_')){
+      const aQ=curMs.reduce((a,m)=>a+getActual(rows,rd,m),0);
+      const tQ=curMs.reduce((a,m)=>a+getTgtV(blk,rd,m),0);
+      if(tQ>0){const p=Math.round(aQ/tQ*100);const c=p>=100?'#16a34a':p>=70?'#d97706':'#e11d48';
+        lbl+=`<span style="color:${c};font-size:9px;font-weight:700;margin-left:4px">(${p}%)</span>`;}
+    }
+    const tgtCols=curMs.map(m=>getTgtV(blk,rd,m));
+    const actCols=curMs.map(m=>getActual(rows,rd,m));
+    const pvActCols=prevMs.map(m=>getActual(rows,rd,m));
+    const pvTgtCols=prevMs.map(m=>getTgtV(blk,rd,m));
+    const tQT=tgtCols.reduce((a,b)=>a+b,0),aQT=actCols.reduce((a,b)=>a+b,0);
+    const pvAT=pvActCols.reduce((a,b)=>a+b,0),pvTT=pvTgtCols.reduce((a,b)=>a+b,0);
+
+    h+=`<tr class="r${rd.lv}"><td>${lbl}</td>`;
+    tgtCols.forEach((v,i)=>h+=numTd(v,i===0?'sep':''));
+    h+=numTd(tQT,'tot');
+    actCols.forEach((v,i)=>h+=numTd(v,i===0?'sep':''));
+    h+=numTd(aQT,'sep tot');
+    pvActCols.forEach((v,i)=>h+=pctTd(v,pvTgtCols[i],i===0?'sep':''));
+    h+=pctTd(pvAT,pvTT,'sep tot');
+    h+=`</tr>`;
+  });
+
+  h+=`</tbody></table></div></div>`;
+  return h;
 }
 
 function renderTgtProgress(){
-  tgtKAM=document.getElementById('tgtKamSel').value;
-  tgtMonth=document.getElementById('tgtMonthSel').value;
-  const wk=weeksLeft();
-  const m=tgtMonth;
-  const rows=vData.filter(r=>!tgtKAM||r.kam===tgtKAM);
-  if(!m){document.getElementById('tgtProgressContent').innerHTML='<div style="padding:40px;text-align:center;color:var(--ink4)">Please select a month</div>';return;}
+  tgtQ=document.getElementById('tgtQSel')?.value||tgtQ;
+  const kamVal=document.getElementById('tgtKamSel')?.value||'';
+  const rows=getTgtRows(kamVal);
+  const prevQ=getPrevQ(tgtQ);
+  const sf=tgtData.statusFilter;
+  const label=kamVal?(sf?`${kamVal} · ${sf}`:kamVal):(sf||'All');
 
-  let html='';
+  let html=renderTrackerBlock(`Overall — ${label}`,rows,tgtData.overall,tgtQ,prevQ);
 
-  // ── OVERALL ──────────────────────────────
-  const kamKey=(tgtKAM||'__all__').toLowerCase();
-  const kamTgt=tgtData.kam[kamKey]||{};
-  const totGMV=rows.reduce((a,r)=>a+((r.gmv||{})[m]||0),0);
-  const totList=rows.reduce((a,r)=>a+((r.listing||{})[m]||0),0);
-  const totOrd=rows.reduce((a,r)=>a+((r.orders||{})[m]||0),0);
-  html+=`<div class="tgt-section">
-    <div class="tgt-sec-title">Overall ${tgtKAM?'— '+tgtKAM:'— All KAMs'}</div>
-    <div class="tgt-grid" style="grid-template-columns:1fr">
-      <div class="prog-card">
-        <div class="prog-card-name"><span>${tgtKAM||'All KAMs'}</span><span style="font-size:10px;font-weight:400;color:var(--ink4)">${rows.length} sellers · ${m}</span></div>
-        ${progBar(totGMV,kamTgt.gmv,'GMV','฿',wk)}
-        ${progBar(totList,kamTgt.listing,'New Listing','pcs',wk)}
-        ${progBar(totOrd,kamTgt.orders,'Orders','orders',wk)}
-        ${!kamTgt.gmv&&!kamTgt.listing&&!kamTgt.orders?'<div style="font-size:11px;color:var(--ink4);text-align:center;padding:10px 0">No target set — go to "Set Targets" tab</div>':''}
-      </div>
-    </div>
-  </div>`;
+  tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e)).forEach(e=>{
+    const r=rows.find(x=>x.email===e);if(!r)return;
+    const blk=tgtData.bySeller[e]||{};
+    html+=renderTrackerBlock(r.name_th||r.shop||e,[r],blk,tgtQ,prevQ);
+  });
 
-  // ── BY FOCUS SELLER ───────────────────────
-  const focusRows=rows.filter(r=>tgtData.focusSellers.includes(r.email));
-  if(focusRows.length){
-    let cards='';
-    focusRows.forEach(r=>{
-      const st=tgtData.seller[r.email]||{};
-      const sg=((r.gmv||{})[m]||0);
-      const sl=((r.listing||{})[m]||0);
-      const so=((r.orders||{})[m]||0);
-      cards+=`<div class="prog-card">
-        <div class="prog-card-name"><span>${r.name_th||r.shop||r.email}</span><span style="font-size:10px;font-weight:400;color:var(--ink4)">${r.email}</span></div>
-        ${progBar(sg,st.gmv,'GMV','฿',wk)}
-        ${progBar(sl,st.listing,'Listing','pcs',wk)}
-        ${progBar(so,st.orders,'Orders','orders',wk)}
-        ${!st.gmv&&!st.listing&&!st.orders?'<div style="font-size:11px;color:var(--ink4)">No individual target set</div>':''}
-      </div>`;
-    });
-    html+=`<div class="tgt-section"><div class="tgt-sec-title">Focus Sellers (${focusRows.length})</div><div class="tgt-grid">${cards}</div></div>`;
-  }
-
-  // ── BY CATEGORY ───────────────────────────
-  const hasCatTgt=Object.keys(tgtData.category).length>0;
-  if(hasCatTgt){
-    const catMap={};
-    rows.forEach(r=>{
-      const cat=r.category||'Uncategorized';
-      if(!catMap[cat])catMap[cat]={gmv:0,listing:0,orders:0};
-      catMap[cat].gmv+=((r.gmv||{})[m]||0);
-      catMap[cat].listing+=((r.listing||{})[m]||0);
-      catMap[cat].orders+=((r.orders||{})[m]||0);
-    });
-    let catCards='';
-    Object.entries(tgtData.category).forEach(([cat,ct])=>{
-      const ac=catMap[cat]||{gmv:0,listing:0,orders:0};
-      catCards+=`<div class="prog-card">
-        <div class="prog-card-name">${cat}</div>
-        ${progBar(ac.gmv,ct.gmv,'GMV','฿',wk)}
-        ${progBar(ac.listing,ct.listing,'Listing','pcs',wk)}
-        ${progBar(ac.orders,ct.orders,'Orders','orders',wk)}
-      </div>`;
-    });
-    html+=`<div class="tgt-section"><div class="tgt-sec-title">By Category</div><div class="tgt-grid">${catCards}</div></div>`;
-  }
-
-  document.getElementById('tgtProgressContent').innerHTML=html||'<div style="padding:40px;text-align:center;color:var(--ink4)">No targets set — go to "Set Targets" tab to add them</div>';
+  document.getElementById('tgtProgressContent').innerHTML=html||
+    '<div style="padding:40px;text-align:center;color:var(--ink4)">No data for current filter</div>';
 }
 
 function renderTgtSet(){
-  const kamName=document.getElementById('tgtSetKamSel').value;
-  const rows=vData.filter(r=>!kamName||r.kam===kamName);
-  const kamKey=(kamName||'__all__').toLowerCase();
+  tgtSetQ=document.getElementById('tgtSetQSel')?.value||tgtSetQ;
+  const kamVal=document.getElementById('tgtSetKamSel')?.value||'';
+  const tgtFor=document.getElementById('tgtSetFor')?.value||'overall';
+  const months=QUARTERS[tgtSetQ];
+  const rows=getTgtRows(kamVal);
+  const blk=tgtFor==='overall'?tgtData.overall:(tgtData.bySeller[tgtFor]||{});
 
-  let html='';
-
-  // ── OVERALL TARGET ────────────────────────
-  const kt=tgtData.kam[kamKey]||{gmv:'',listing:'',orders:''};
-  html+=`<div class="tgt-section">
-    <div class="tgt-sec-title">Overall Target ${kamName?'— '+kamName:'(select a KAM first)'}</div>
-    <div class="tgt-form-hd overall"><span>GMV (฿)</span><span>New Listing (pcs)</span><span>Orders</span><span></span></div>
-    <div class="tgt-form-row overall">
-      <input class="tgt-in" type="number" placeholder="GMV target" id="ktGMV" value="${kt.gmv||''}">
-      <input class="tgt-in" type="number" placeholder="Listing target" id="ktList" value="${kt.listing||''}">
-      <input class="tgt-in" type="number" placeholder="Orders target" id="ktOrd" value="${kt.orders||''}">
-      <button class="tgt-save-btn" onclick="saveKAMTarget('${kamKey}')">Save</button>
-    </div>
-  </div>`;
-
-  // ── FOCUS SELLERS ─────────────────────────
-  const focusList=tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e));
+  populateTgtSetFor();
   const nonFocus=rows.filter(r=>!tgtData.focusSellers.includes(r.email));
-  html+=`<div class="tgt-section">
-    <div class="tgt-sec-title">Focus Sellers — Individual Targets</div>
+
+  let html=`<div class="tgt-section">
+    <div class="tgt-sec-title">Focus Sellers</div>
     <div class="tgt-add-row">
       <select class="tgt-add-in" id="addFocusSel">
-        <option value="">— Select a seller to focus —</option>
-        ${nonFocus.map(r=>`<option value="${r.email}">${r.name_th||r.shop||r.email} (${r.email})</option>`).join('')}
+        <option value="">— Add focus seller —</option>
+        ${nonFocus.map(r=>`<option value="${r.email}">${r.name_th||r.shop||r.email}</option>`).join('')}
       </select>
       <button class="tgt-add-btn" onclick="addFocusSeller()">+ Add</button>
     </div>
-    <div class="tgt-form-hd seller"><span>Seller</span><span>GMV (฿)</span><span>Listing (pcs)</span><span>Orders</span><span></span><span></span></div>
-    ${focusList.length?focusList.map(email=>{
-      const r=rows.find(x=>x.email===email)||{name_th:'',shop:'',email};
-      const st=tgtData.seller[email]||{};
-      return`<div class="tgt-form-row seller">
-        <span class="tgt-lbl" title="${email}">${r.name_th||r.shop||email}</span>
-        <input class="tgt-in" type="number" placeholder="GMV" value="${st.gmv||''}" onchange="tgtData.seller['${email}']={...tgtData.seller['${email}']||{},gmv:+this.value};saveTgt()">
-        <input class="tgt-in" type="number" placeholder="Listing" value="${st.listing||''}" onchange="tgtData.seller['${email}']={...tgtData.seller['${email}']||{},listing:+this.value};saveTgt()">
-        <input class="tgt-in" type="number" placeholder="Orders" value="${st.orders||''}" onchange="tgtData.seller['${email}']={...tgtData.seller['${email}']||{},orders:+this.value};saveTgt()">
-        <button class="tgt-save-btn" onclick="toast('Saved ✓','ok')">Save</button>
-        <button class="tgt-rem-btn" onclick="removeFocus('${email}')">Remove</button>
-      </div>`;
-    }).join(''):'<div style="font-size:11px;color:var(--ink4);padding:8px 0">No focus sellers yet — add one from the dropdown above</div>'}
+    <div class="focus-chips">${tgtData.focusSellers.length?tgtData.focusSellers.map(e=>{
+      const r=rows.find(x=>x.email===e)||{};
+      return`<span class="focus-chip">${r.name_th||r.shop||e}<button onclick="removeFocus('${e}')">×</button></span>`;
+    }).join(''):'<span style="font-size:11px;color:var(--ink4)">No focus sellers yet</span>'}</div>
   </div>`;
 
-  // ── BY CATEGORY ───────────────────────────
-  const cats=[...new Set(rows.map(r=>r.category||'').filter(Boolean))].sort();
+  const defs=buildRowDefs(rows);
+  const forLabel=tgtFor==='overall'?'Overall':(rows.find(r=>r.email===tgtFor)?.name_th||tgtFor);
   html+=`<div class="tgt-section">
-    <div class="tgt-sec-title">Target by Category</div>
-    <div class="tgt-form-hd cat"><span>Category</span><span>GMV (฿)</span><span>Listing (pcs)</span><span>Orders</span><span></span></div>
-    ${cats.map(cat=>{
-      const ct=tgtData.category[cat]||{};
-      return`<div class="tgt-form-row cat">
-        <span class="tgt-lbl">${cat}</span>
-        <input class="tgt-in" type="number" placeholder="GMV" value="${ct.gmv||''}" onchange="tgtData.category['${cat}']={...tgtData.category['${cat}']||{},gmv:+this.value};saveTgt()">
-        <input class="tgt-in" type="number" placeholder="Listing" value="${ct.listing||''}" onchange="tgtData.category['${cat}']={...tgtData.category['${cat}']||{},listing:+this.value};saveTgt()">
-        <input class="tgt-in" type="number" placeholder="Orders" value="${ct.orders||''}" onchange="tgtData.category['${cat}']={...tgtData.category['${cat}']||{},orders:+this.value};saveTgt()">
-        <button class="tgt-save-btn" onclick="toast('Saved ✓','ok')">Save</button>
-      </div>`;
-    }).join('')||'<div style="font-size:11px;color:var(--ink4);padding:8px 0">No categories found in data</div>'}
-  </div>`;
+    <div class="tgt-sec-title">Set Targets — ${forLabel} — ${tgtSetQ}</div>
+    <table class="tgt-set-tbl"><thead><tr>
+      <th>Metric / Group</th>
+      ${months.map(m=>`<th>${m}</th>`).join('')}
+    </tr></thead><tbody>`;
 
+  defs.forEach(rd=>{
+    const g=rd.grp?`,'${rd.grp}'`:'';
+    html+=`<tr class="s${rd.lv>0?'l'+rd.lv:''}"><td>${rd.label}</td>`;
+    months.forEach(m=>{
+      const cur=getTgtV(blk,rd,m);
+      html+=`<td><input class="tgt-num-in" type="number" min="0" value="${cur||''}" placeholder="—"
+        onchange="setTgtV('${tgtFor}','${rd.key}','${m}',+this.value${g})"></td>`;
+    });
+    html+=`</tr>`;
+  });
+
+  html+=`</tbody></table></div>`;
   document.getElementById('tgtSetContent').innerHTML=html;
 }
 
-function saveKAMTarget(kamKey){
-  tgtData.kam[kamKey]={
-    gmv:+(document.getElementById('ktGMV').value||0),
-    listing:+(document.getElementById('ktList').value||0),
-    orders:+(document.getElementById('ktOrd').value||0),
-  };
-  saveTgt();toast('Saved overall target ✓','ok');
+function setTgtV(blkKey,key,month,val,grp){
+  let t;
+  if(blkKey==='overall'){t=tgtData.overall;}
+  else{if(!tgtData.bySeller[blkKey])tgtData.bySeller[blkKey]={};t=tgtData.bySeller[blkKey];}
+  if(!t[key])t[key]={};
+  if(grp){if(!t[key].grp)t[key].grp={};if(!t[key].grp[grp])t[key].grp[grp]={};t[key].grp[grp][month]=val||0;}
+  else{t[key][month]=val||0;}
+  saveTgt();
 }
+
 function addFocusSeller(){
-  const sel=document.getElementById('addFocusSel');
-  const email=sel.value;if(!email)return;
+  const sel=document.getElementById('addFocusSel');const email=sel.value;if(!email)return;
   if(!tgtData.focusSellers.includes(email))tgtData.focusSellers.push(email);
-  saveTgt();renderTgtSet();
+  saveTgt();populateTgtSetFor();renderTgtSet();
 }
 function removeFocus(email){
   tgtData.focusSellers=tgtData.focusSellers.filter(e=>e!==email);
-  saveTgt();renderTgtSet();
+  saveTgt();populateTgtSetFor();renderTgtSet();
 }
 </script>
 </body>
