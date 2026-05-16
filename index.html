@@ -966,13 +966,13 @@ function saveRow(id){
     r.offboard_date=new Date().toLocaleDateString('th-TH');r._origin_tab=at;if(isRej)r.status='Reject';
     if(at==='vendor')vData=vData.filter(x=>x._id!==id);else if(at==='onboard')oData=oData.filter(x=>x._id!==id);
     if(!xbData.find(x=>x._id===id))xbData.push(r);
-    editing=null;persist();setTimeout(()=>{switchTab('offboard',null);toast(`Moved ${r.email||r.shop||'seller'} → Offboard ✓`,'ok');},80);return;
+    editing=null;persist();setTimeout(()=>{render();toast(`Moved ${r.email||r.shop||'seller'} → Offboard ✓`,'ok');},80);return;
   }
   if(at==='offboard'&&!isOff&&sv!=='reject'){
     const ot=r._origin_tab||'vendor';r.offboard_source='';r.offboard_date='';delete r._origin_tab;
     xbData=xbData.filter(x=>x._id!==id);
     if(ot==='onboard'){if(!oData.find(x=>x._id===id))oData.push(r);}else{if(!vData.find(x=>x._id===id))vData.push(r);}
-    editing=null;persist();setTimeout(()=>{switchTab(ot,null);toast(`Moved → ${ot==='onboard'?'VA Onboard':'Vendor perf'} ✓`,'ok');},80);return;
+    editing=null;persist();setTimeout(()=>{render();toast(`Moved → ${ot==='onboard'?'VA Onboard':'Vendor perf'} ✓`,'ok');},80);return;
   }
   editing=null;persist();render();
   toast('Saved locally — click Sync to save to Sheet');
