@@ -1453,9 +1453,10 @@ function renderBodyCell(spec,r,rowIdx,isE){
       else if(c.render==='seller_type')inner=sellerTypeChip(r[c.k]);
       else if(c.type==='dyn'&&c.multi)inner=renderChips(c.dynKey||c.k,r[c.k]);
       else if(c.type==='dyn')inner=renderChips(c.dynKey||c.k,r[c.k]);
-      else inner=`<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${esc(val)}" onclick="startEdit('${r._id}')">${val||'—'}</span>`;
+      else inner=`<span class="c-val ${c.cls||''} ${val?'':'dim'}" title="${esc(val)}">${val||'—'}</span>`;
     }
-    return `<div class="cell ${frozCls} ${lastFrozCls}" style="width:${w}px;min-width:${w}px;${leftStyle}" data-col="${key}">${inner}</div>`;
+    const clickAttr=(!isE&&canEdit)?`onclick="startEdit('${r._id}')" style="cursor:pointer;width:${w}px;min-width:${w}px;${leftStyle}"`:`style="width:${w}px;min-width:${w}px;${leftStyle}"`;
+    return `<div class="cell ${frozCls} ${lastFrozCls}" ${clickAttr} data-col="${key}">${inner}</div>`;
   }
 
   // metric total
