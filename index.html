@@ -378,6 +378,26 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .tgt-set-tbl .sl2 td:first-child{padding-left:36px;color:var(--ink4);font-size:10px}
 .tgt-num-in{width:80px;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:11px;font-family:inherit;color:var(--ink);text-align:right;background:var(--surface);outline:none}
 .tgt-num-in:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(13,148,136,.12)}
+/* ── Target Progress Cards ── */
+.tgt-overall-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.tgt-sum-card{flex:1;min-width:110px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+.tgt-sum-val{font-size:22px;font-weight:700;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+.tgt-sum-label{font-size:10px;color:var(--ink4);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.tgt-sum-sub{font-size:11px;color:var(--ink3);margin-top:3px;font-variant-numeric:tabular-nums}
+.tgt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.tgt-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:box-shadow .15s}
+.tgt-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.tgt-card.focus-card{border-left:3px solid #d97706}
+.tgt-card-hd{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.tgt-card-name{font-size:12px;font-weight:600;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tgt-card-status{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;flex-shrink:0;white-space:nowrap}
+.tgt-card-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.tgt-metric-row{margin-bottom:9px}
+.tgt-metric-lbl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.tgt-metric-key{font-size:11px;color:var(--ink3);font-weight:500}
+.tgt-metric-val{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.tgt-bar-track{height:7px;border-radius:4px;background:#e9e5df;overflow:hidden}
+.tgt-bar-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
 </style>
 </head>
 <body>
@@ -2123,24 +2143,78 @@ function renderTrackerBlock(title,rows,blk,curQ,prevQ){
   return h;
 }
 
+function renderSellerCard(r,blk,curQ,curMs){
+  const isFocus=tgtData.focusSellers.includes(r.email);
+  const name=r.name_th||r.name_en||r.shop||r.email;
+  const status=r.status||'';
+  const rows=[r];
+  const statusColor={'Active':'#16a34a','VIP':'#7c3aed','Focus':'#d97706','Unactive':'#6b7280','Waiting Contact':'#0891b2','Offboard':'#e11d48'}[status]||'#6b7280';
+  const listAct=curMs.reduce((a,m)=>a+((r.listing||{})[m]||0),0);
+  const listTgt=curMs.reduce((a,m)=>a+getTgtV(blk,{key:'listing'},m),0);
+  const badgePct=listTgt>0?Math.round(listAct/listTgt*100):null;
+  const badgeCol=badgePct===null?null:badgePct>=100?'#16a34a':badgePct>=70?'#d97706':'#e11d48';
+  const badgeBg=badgePct===null?null:badgePct>=100?'#f0fdf4':badgePct>=70?'#fffbeb':'#fff1f2';
+  const metricDefs=[{rd:{key:'listing',lv:0},label:'Listing'},{rd:{key:'gmv',lv:0},label:'GMV'},{rd:{key:'orders',lv:0},label:'Orders'}];
+  let bars='';
+  metricDefs.forEach(({rd,label})=>{
+    const act=curMs.reduce((a,m)=>a+getActual(rows,rd,m),0);
+    const tgt=curMs.reduce((a,m)=>a+getTgtV(blk,rd,m),0);
+    if(!tgt&&!act)return;
+    const pctNum=tgt>0?act/tgt*100:(act>0?100:0);
+    const pctDisp=tgt>0?Math.round(pctNum):null;
+    const fillW=Math.min(pctNum,100).toFixed(1);
+    const col=pctDisp===null?'#9ca3af':pctDisp>=100?'#16a34a':pctDisp>=70?'#d97706':'#e11d48';
+    const grad=pctDisp===null?'#9ca3af':pctDisp>=100?'linear-gradient(90deg,#16a34a,#22c55e)':pctDisp>=70?'linear-gradient(90deg,#d97706,#f59e0b)':'linear-gradient(90deg,#e11d48,#f43f5e)';
+    bars+=`<div class="tgt-metric-row">
+      <div class="tgt-metric-lbl">
+        <span class="tgt-metric-key">${label}</span>
+        <span class="tgt-metric-val">${fmtN(act)||'0'}${tgt?` / <span style="color:var(--ink4)">${fmtN(tgt)}</span>`:''}${pctDisp!==null?` <span style="color:${col};font-weight:700;font-size:10px">${pctDisp}%</span>`:''}</span>
+      </div>
+      <div class="tgt-bar-track"><div class="tgt-bar-fill" style="width:${fillW}%;background:${grad}"></div></div>
+    </div>`;
+  });
+  if(!bars)bars='<div style="font-size:11px;color:var(--ink4);padding:6px 0;text-align:center">No targets set</div>';
+  return`<div class="tgt-card${isFocus?' focus-card':''}">
+    <div class="tgt-card-hd">
+      ${isFocus?'<span style="font-size:11px;color:#d97706">★</span>':''}
+      <span class="tgt-card-name" title="${name}">${name}</span>
+      ${status?`<span class="tgt-card-status" style="background:${statusColor}22;color:${statusColor}">${status}</span>`:''}
+      ${badgeCol?`<span class="tgt-card-badge" style="background:${badgeBg};color:${badgeCol}">${badgePct}%</span>`:''}
+    </div>
+    ${bars}
+  </div>`;
+}
+
 function renderTgtProgress(){
   tgtQ=document.getElementById('tgtQSel')?.value||tgtQ;
   const kamVal=document.getElementById('tgtKamSel')?.value||'';
   const rows=getTgtRows(kamVal);
-  const prevQ=getPrevQ(tgtQ);
-  const sf=tgtData.statusFilter;
-  const label=kamVal?(sf?`${kamVal} · ${sf}`:kamVal):(sf||'All');
-
-  let html=renderTrackerBlock(`Overall — ${label}`,rows,tgtData.overall,tgtQ,prevQ);
-
-  tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e)).forEach(e=>{
-    const r=rows.find(x=>x.email===e);if(!r)return;
-    const blk=tgtData.bySeller[e]||{};
-    html+=renderTrackerBlock(r.name_th||r.shop||e,[r],blk,tgtQ,prevQ);
+  const curMs=QUARTERS[tgtQ];
+  const el=document.getElementById('tgtProgressContent');
+  if(!rows.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--ink4)">No data for current filter</div>';return;}
+  const sumMetrics=[{rd:{key:'listing',lv:0},label:'Listing'},{rd:{key:'gmv',lv:0},label:'GMV (฿)'},{rd:{key:'orders',lv:0},label:'Orders'}];
+  let sumHtml='<div class="tgt-overall-summary">';
+  sumMetrics.forEach(({rd,label})=>{
+    const act=curMs.reduce((a,m)=>a+getActual(rows,rd,m),0);
+    const tgt=curMs.reduce((a,m)=>a+getTgtV(tgtData.overall,rd,m),0);
+    const pct=tgt>0?Math.round(act/tgt*100):null;
+    const col=pct===null?'var(--ink)':pct>=100?'#16a34a':pct>=70?'#d97706':'#e11d48';
+    sumHtml+=`<div class="tgt-sum-card">
+      <div class="tgt-sum-val" style="color:${col}">${fmtN(act)||'—'}</div>
+      <div class="tgt-sum-label">${label}</div>
+      <div class="tgt-sum-sub">${tgt?`Target ${fmtN(tgt)}${pct!==null?' · '+pct+'%':''}`:rows.length+' sellers'}</div>
+    </div>`;
   });
-
-  document.getElementById('tgtProgressContent').innerHTML=html||
-    '<div style="padding:40px;text-align:center;color:var(--ink4)">No data for current filter</div>';
+  sumHtml+=`<div class="tgt-sum-card"><div class="tgt-sum-val">${rows.length}</div><div class="tgt-sum-label">Sellers</div><div class="tgt-sum-sub">${tgtQ}</div></div></div>`;
+  const focusRows=tgtData.focusSellers.filter(e=>rows.some(r=>r.email===e)).map(e=>rows.find(r=>r.email===e)).filter(Boolean);
+  const otherRows=rows.filter(r=>!tgtData.focusSellers.includes(r.email));
+  let cardsHtml='<div class="tgt-grid">';
+  [...focusRows,...otherRows].forEach(r=>{
+    const blk=tgtData.bySeller[r.email]||{};
+    cardsHtml+=renderSellerCard(r,blk,tgtQ,curMs);
+  });
+  cardsHtml+='</div>';
+  el.innerHTML=sumHtml+cardsHtml;
 }
 
 function selLabel(r){return`${r.name_en||r.name_th||r.shop||r.email} (${r.email})`;}
