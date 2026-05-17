@@ -2162,7 +2162,15 @@ function renderSellerCard(r,blk,curQ,curMs){
   const badgePct=listTgt>0?Math.round(listAct/listTgt*100):null;
   const badgeCol=badgePct===null?null:badgePct>=100?'#16a34a':badgePct>=70?'#d97706':'#e11d48';
   const badgeBg=badgePct===null?null:badgePct>=100?'#f0fdf4':badgePct>=70?'#fffbeb':'#fff1f2';
-  const metricDefs=[{rd:{key:'listing',lv:0},label:'Listing'},{rd:{key:'gmv',lv:0},label:'GMV'},{rd:{key:'orders',lv:0},label:'Orders'}];
+  const metricDefs=[
+    {rd:{key:'listing',lv:0},label:'Listing'},
+    {rd:{key:'listing_std',lv:1},label:'STD'},
+    {rd:{key:'listing_r2s',lv:1},label:'R2S'},
+    {rd:{key:'listing_inter',lv:1},label:'STD-INTER'},
+    {rd:{key:'listing_pre',lv:1},label:'PRE'},
+    {rd:{key:'gmv',lv:0},label:'GMV'},
+    {rd:{key:'orders',lv:0},label:'Orders'},
+  ];
   let bars='';
   metricDefs.forEach(({rd,label})=>{
     const act=curMs.reduce((a,m)=>a+getActual(rows,rd,m),0);
