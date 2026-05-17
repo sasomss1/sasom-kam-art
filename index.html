@@ -370,9 +370,10 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .focus-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:var(--surface);border:1px solid var(--border2);color:var(--ink2)}
 .focus-chip button{border:none;background:none;cursor:pointer;color:var(--ink4);font-size:14px;line-height:1;padding:0;margin-left:2px}
 .tgt-set-tbl{border-collapse:collapse;font-size:11px;width:100%}
-.tgt-set-tbl th{text-align:right;font-size:10px;font-weight:700;color:var(--ink4);padding:4px 8px;border-bottom:1px solid var(--border);letter-spacing:.3px;white-space:nowrap}
+.tgt-set-tbl th{text-align:center;font-size:10px;font-weight:700;color:var(--ink4);padding:4px 8px;border-bottom:1px solid var(--border);letter-spacing:.3px;white-space:nowrap}
 .tgt-set-tbl th:first-child{text-align:left;min-width:160px}
-.tgt-set-tbl td{padding:3px 4px;border-bottom:1px solid var(--border)}
+.tgt-set-tbl td{padding:3px 4px;border-bottom:1px solid var(--border);text-align:center}
+.tgt-set-tbl td:first-child{text-align:left!important}
 .tgt-set-tbl td:first-child{font-size:11px;color:var(--ink2);padding:4px 10px;text-align:left;white-space:nowrap}
 .tgt-set-tbl .sl1 td:first-child{padding-left:22px;color:var(--ink3)}
 .tgt-set-tbl .sl2 td:first-child{padding-left:36px;color:var(--ink4);font-size:10px}
@@ -2177,7 +2178,10 @@ function renderSellerCard(r,blk,curQ,curMs){
   return`<div class="tgt-card${isFocus?' focus-card':''}">
     <div class="tgt-card-hd">
       ${isFocus?'<span style="font-size:11px;color:#d97706">★</span>':''}
-      <span class="tgt-card-name" title="${name}">${name}</span>
+      <div style="flex:1;min-width:0">
+        <div class="tgt-card-name" title="${name}">${name}</div>
+        ${r.email?`<div style="font-size:10px;color:var(--ink4);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.email}</div>`:''}
+      </div>
       ${status?`<span class="tgt-card-status" style="background:${statusColor}22;color:${statusColor}">${status}</span>`:''}
       ${badgeCol?`<span class="tgt-card-badge" style="background:${badgeBg};color:${badgeCol}">${badgePct}%</span>`:''}
     </div>
