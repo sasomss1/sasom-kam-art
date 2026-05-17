@@ -2220,7 +2220,8 @@ function renderSellerCard(r,blk,curQ,curMs){
     </div>`;
   });
   if(!sections)sections='<div style="font-size:11px;color:var(--ink4);padding:6px 0;text-align:center">No targets set</div>';
-  return`<div class="tgt-card${isFocus?' focus-card':''}">
+  const safeEmail=r.email.replace(/'/g,"\\'");
+  return`<div class="tgt-card${isFocus?' focus-card':''}" onclick="openSellerTargets('${safeEmail}')" style="cursor:pointer">
     <div class="tgt-card-hd">
       ${isFocus?'<span style="font-size:11px;color:#d97706">★</span>':''}
       <div style="flex:1;min-width:0">
@@ -2229,6 +2230,7 @@ function renderSellerCard(r,blk,curQ,curMs){
       </div>
       ${status?`<span class="tgt-card-status" style="background:${statusColor}22;color:${statusColor}">${status}</span>`:''}
       ${badgeCol?`<span class="tgt-card-badge" style="background:${badgeBg};color:${badgeCol}">${badgePct}%</span>`:''}
+      <span style="font-size:10px;color:var(--ink4);flex-shrink:0;margin-left:2px">✏️</span>
     </div>
     ${sections}
   </div>`;
@@ -2348,6 +2350,22 @@ function setTgtV(blkKey,key,month,val,grp){
   if(grp){if(!t[key].grp)t[key].grp={};if(!t[key].grp[grp])t[key].grp[grp]={};t[key].grp[grp][month]=val||0;}
   else{t[key][month]=val||0;}
   saveTgt();
+}
+
+function openSellerTargets(email){
+  // sync KAM selector if needed
+  const kamSel=document.getElementById('tgtSetKamSel');
+  const r=vData.find(x=>x.email===email);
+  if(r&&kamSel&&r.kam){kamSel.value=r.kam;}
+  // switch to Set Targets tab
+  switchTgtTab('set');
+  // ensure seller is in focus list so it appears in the dropdown
+  if(!tgtData.focusSellers.includes(email)){tgtData.focusSellers.push(email);saveTgt();}
+  populateTgtSetFor();
+  // select the seller
+  const sel=document.getElementById('tgtSetFor');
+  if(sel){sel.value=email;}
+  renderTgtSet();
 }
 
 let _focusSelEmail='';
