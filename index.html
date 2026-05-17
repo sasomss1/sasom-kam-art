@@ -365,6 +365,12 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
 .tgt-add-row{display:flex;gap:8px;margin-bottom:12px}
 .tgt-add-in{flex:1;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:11px;font-family:inherit;color:var(--ink);background:var(--surface);outline:none}
 .tgt-add-btn{padding:5px 14px;border-radius:6px;font-size:11px;border:1px solid var(--ink3);background:none;color:var(--ink2);cursor:pointer;font-family:inherit}
+.tgt-search-wrap{flex:1;position:relative}
+.tgt-search-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.13);z-index:200;max-height:260px;overflow-y:auto;display:none}
+.tgt-search-item{padding:7px 12px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.tgt-search-item:hover{background:#f5f0eb}
+.tgt-si-name{font-size:12px;color:var(--ink);font-weight:500}
+.tgt-si-email{font-size:10px;color:var(--ink4)}
 .tgt-rem-btn{padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid #fca5a5;background:#fff1f2;color:#e11d48;cursor:pointer;font-family:inherit}
 .focus-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .focus-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:var(--surface);border:1px solid var(--border2);color:var(--ink2)}
@@ -2220,7 +2226,7 @@ function renderTgtProgress(){
   const otherRows=rows.filter(r=>!tgtData.focusSellers.includes(r.email));
   let cardsHtml='<div class="tgt-grid">';
   [...focusRows,...otherRows].forEach(r=>{
-    const blk=tgtData.bySeller[r.email]||{};
+    const blk=tgtData.bySeller[r.email]||tgtData.overall||{};
     cardsHtml+=renderSellerCard(r,blk,tgtQ,curMs);
   });
   cardsHtml+='</div>';
@@ -2248,13 +2254,24 @@ function renderTgtSet(){
   populateTgtSetFor();
   const nonFocus=allRows.filter(r=>!tgtData.focusSellers.includes(r.email));
 
+  const selItems=nonFocus.map(r=>{
+    const n=r.name_en||r.name_th||r.shop||r.email;
+    const safeEmail=r.email.replace(/'/g,"\\'");
+    const safeLabel=(selLabel(r)).replace(/'/g,"\\'");
+    return`<div class="tgt-search-item" data-email="${r.email}" data-name="${n.toLowerCase()}" onclick="selectFocusSeller('${safeEmail}','${safeLabel}')">
+      <span class="tgt-si-name">${n}</span>
+      <span class="tgt-si-email">${r.email}</span>
+    </div>`;
+  }).join('');
+
   let html=`<div class="tgt-section">
-    <div class="tgt-sec-title">Focus Sellers — ${kamVal}</div>
+    <div class="tgt-sec-title">Focus Sellers — ${kamVal||'All KAMs'}</div>
     <div class="tgt-add-row">
-      <select class="tgt-add-in" id="addFocusSel">
-        <option value="">— Add focus seller —</option>
-        ${nonFocus.map(r=>`<option value="${r.email}">${selLabel(r)}</option>`).join('')}
-      </select>
+      <div class="tgt-search-wrap" id="focusSearchWrap">
+        <input class="tgt-add-in" type="text" id="focusSearchIn" placeholder="ค้นหาชื่อ หรือ email…" autocomplete="off"
+          oninput="filterFocusList()" onfocus="openFocusDrop()">
+        <div class="tgt-search-drop" id="focusSearchDrop">${selItems}</div>
+      </div>
       <button class="tgt-add-btn" onclick="addFocusSeller()">+ Add</button>
     </div>
     <div class="focus-chips">${tgtData.focusSellers.filter(e=>allRows.some(r=>r.email===e)).length?
@@ -2300,9 +2317,36 @@ function setTgtV(blkKey,key,month,val,grp){
   saveTgt();
 }
 
+let _focusSelEmail='';
+
+function openFocusDrop(){
+  const drop=document.getElementById('focusSearchDrop');if(drop)drop.style.display='';
+}
+function filterFocusList(){
+  const q=(document.getElementById('focusSearchIn').value||'').toLowerCase();
+  const drop=document.getElementById('focusSearchDrop');if(!drop)return;
+  drop.style.display='';
+  drop.querySelectorAll('.tgt-search-item').forEach(el=>{
+    const name=el.dataset.name||'';
+    const email=(el.dataset.email||'').toLowerCase();
+    el.style.display=(!q||name.includes(q)||email.includes(q))?'':'none';
+  });
+}
+function selectFocusSeller(email,label){
+  _focusSelEmail=email;
+  const inp=document.getElementById('focusSearchIn');if(inp)inp.value=label;
+  const drop=document.getElementById('focusSearchDrop');if(drop)drop.style.display='none';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#focusSearchWrap')){
+    const drop=document.getElementById('focusSearchDrop');if(drop)drop.style.display='none';
+  }
+});
 function addFocusSeller(){
-  const sel=document.getElementById('addFocusSel');const email=sel.value;if(!email)return;
+  const email=_focusSelEmail;if(!email)return;
   if(!tgtData.focusSellers.includes(email))tgtData.focusSellers.push(email);
+  _focusSelEmail='';
+  const inp=document.getElementById('focusSearchIn');if(inp)inp.value='';
   saveTgt();populateTgtSetFor();renderTgtSet();
 }
 function removeFocus(email){
