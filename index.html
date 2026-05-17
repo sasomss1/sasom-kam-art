@@ -606,6 +606,8 @@ body.col-resizing{cursor:col-resize!important;user-select:none!important}
       <select class="tgt-sel" id="tgtSetFor" onchange="renderTgtSet()">
         <option value="overall">Overall</option>
       </select>
+      <button class="tgt-sel" style="background:#16a34a;color:#fff;border-color:#16a34a;cursor:pointer;font-weight:600" onclick="saveTgtToSheet()">↑ Save to Sheet</button>
+      <button class="tgt-sel" style="background:var(--teal);color:#fff;border-color:var(--teal);cursor:pointer" onclick="loadTgtFromSheet()">↓ Load from Sheet</button>
     </div>
     <div id="tgtSetContent"></div>
   </div>
@@ -2145,7 +2147,7 @@ function renderTrackerBlock(title,rows,blk,curQ,prevQ){
 
 function renderSellerCard(r,blk,curQ,curMs){
   const isFocus=tgtData.focusSellers.includes(r.email);
-  const name=r.name_th||r.name_en||r.shop||r.email;
+  const name=r.name_en||r.name_th||r.shop||r.email;
   const status=r.status||'';
   const rows=[r];
   const statusColor={'Active':'#16a34a','VIP':'#7c3aed','Focus':'#d97706','Unactive':'#6b7280','Waiting Contact':'#0891b2','Offboard':'#e11d48'}[status]||'#6b7280';
@@ -2159,16 +2161,21 @@ function renderSellerCard(r,blk,curQ,curMs){
   metricDefs.forEach(({rd,label})=>{
     const act=curMs.reduce((a,m)=>a+getActual(rows,rd,m),0);
     const tgt=curMs.reduce((a,m)=>a+getTgtV(blk,rd,m),0);
-    if(!tgt&&!act)return;
-    const pctNum=tgt>0?act/tgt*100:(act>0?100:0);
-    const pctDisp=tgt>0?Math.round(pctNum):null;
+    if(!tgt)return; // only show bar when target is set
+    const pctNum=act/tgt*100;
+    const pctDisp=Math.round(pctNum);
     const fillW=Math.min(pctNum,100).toFixed(1);
-    const col=pctDisp===null?'#9ca3af':pctDisp>=100?'#16a34a':pctDisp>=70?'#d97706':'#e11d48';
-    const grad=pctDisp===null?'#9ca3af':pctDisp>=100?'linear-gradient(90deg,#16a34a,#22c55e)':pctDisp>=70?'linear-gradient(90deg,#d97706,#f59e0b)':'linear-gradient(90deg,#e11d48,#f43f5e)';
+    const gap=tgt>act?tgt-act:0;
+    const col=pctDisp>=100?'#16a34a':pctDisp>=70?'#d97706':'#e11d48';
+    const grad=pctDisp>=100?'linear-gradient(90deg,#16a34a,#22c55e)':pctDisp>=70?'linear-gradient(90deg,#d97706,#f59e0b)':'linear-gradient(90deg,#e11d48,#f43f5e)';
     bars+=`<div class="tgt-metric-row">
       <div class="tgt-metric-lbl">
         <span class="tgt-metric-key">${label}</span>
-        <span class="tgt-metric-val">${fmtN(act)||'0'}${tgt?` / <span style="color:var(--ink4)">${fmtN(tgt)}</span>`:''}${pctDisp!==null?` <span style="color:${col};font-weight:700;font-size:10px">${pctDisp}%</span>`:''}</span>
+        <span class="tgt-metric-val">
+          ${fmtN(act)} / <span style="color:var(--ink4)">${fmtN(tgt)}</span>
+          <span style="color:${col};font-weight:700;font-size:10px;margin-left:3px">${pctDisp}%</span>
+          ${gap>0?`<span style="color:var(--ink4);font-size:10px;margin-left:3px">· ขาดอีก ${fmtN(gap)}</span>`:'<span style="color:#16a34a;font-size:10px;margin-left:3px">✓</span>'}
+        </span>
       </div>
       <div class="tgt-bar-track"><div class="tgt-bar-fill" style="width:${fillW}%;background:${grad}"></div></div>
     </div>`;
@@ -2301,6 +2308,37 @@ function addFocusSeller(){
 function removeFocus(email){
   tgtData.focusSellers=tgtData.focusSellers.filter(e=>e!==email);
   saveTgt();populateTgtSetFor();renderTgtSet();
+}
+
+async function saveTgtToSheet(){
+  const url=document.getElementById('scriptUrl').value.trim();
+  if(!url){toast('Please enter Apps Script URL first','err');return;}
+  toast('Saving targets…');
+  try{
+    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'saveTargets',targets:tgtData}),headers:{'Content-Type':'text/plain'}});
+    const j=await res.json();
+    if(j.status==='success')toast('Targets saved to Sheet ✓','ok');
+    else toast('Error: '+(j.message||'unknown'),'err');
+  }catch(e){toast('Could not connect to Apps Script','err');}
+}
+
+async function loadTgtFromSheet(){
+  const url=document.getElementById('scriptUrl').value.trim();
+  if(!url){toast('Please enter Apps Script URL first','err');return;}
+  toast('Loading targets…');
+  try{
+    const res=await fetch(url+'?action=getTargets');
+    const j=await res.json();
+    if(j.status==='success'&&j.targets){
+      tgtData=j.targets;
+      if(!tgtData.overall)tgtData.overall={};
+      if(!tgtData.bySeller)tgtData.bySeller={};
+      if(!tgtData.focusSellers)tgtData.focusSellers=[];
+      if(tgtData.statusFilter===undefined)tgtData.statusFilter='';
+      saveTgt();renderSfChips();renderTgtProgress();renderTgtSet();
+      toast('Targets loaded ✓','ok');
+    }else toast('No targets found in Sheet','err');
+  }catch(e){toast('Could not load targets','err');}
 }
 </script>
 </body>
