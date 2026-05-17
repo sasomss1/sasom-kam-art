@@ -2053,7 +2053,6 @@ function buildRowDefs(rows){
   defs.push({key:'listing',label:'Listing',lv:0});
   [{k:'listing_std',l:'STD'},{k:'listing_r2s',l:'R2S'},{k:'listing_inter',l:'STD-INTER'},{k:'listing_pre',l:'PRE'}].forEach(({k,l})=>{
     defs.push({key:k,label:l,lv:1});
-    if(k==='listing_std'||k==='listing_r2s')groups.forEach(g=>defs.push({key:k,label:g,lv:2,grp:g}));
   });
   defs.push({key:'gmv',label:'GMV (฿)',lv:0});
   defs.push({key:'orders',label:'Orders',lv:0});
