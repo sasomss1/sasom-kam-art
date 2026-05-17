@@ -2017,6 +2017,7 @@ function initTgtView(){
 
 function populateTgtSetFor(){
   const el=document.getElementById('tgtSetFor');if(!el)return;
+  const prevVal=el.value;
   const kamVal=document.getElementById('tgtSetKamSel')?.value||'';
   const allRows=kamVal?vData.filter(r=>r.kam===kamVal):vData;
   el.innerHTML='<option value="overall">Overall</option>'+
@@ -2024,6 +2025,7 @@ function populateTgtSetFor(){
       const r=allRows.find(x=>x.email===e)||{};
       return`<option value="${e}">${selLabel(r)}</option>`;
     }).join('');
+  if(prevVal&&el.querySelector(`option[value="${CSS.escape(prevVal)}"]`))el.value=prevVal;
 }
 
 function renderSfChips(){
